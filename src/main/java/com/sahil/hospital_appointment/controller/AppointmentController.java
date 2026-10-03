@@ -32,13 +32,24 @@ public class AppointmentController {
 
     private final AppointmentService appointmentService;
 
-    // A patient books for themself. #patientId in the request body must
-    // match their own patient id - enforced via isPatientSelf.
+    /**
+     * Books an appointment for the specified patient. Patients may book only for
+     * themselves, while administrators may book for any patient.
+     *
+     * @param patientId the patient receiving the appointment
+     * @param request the doctor, date, time, and optional reason for the visit
+     * @return the newly created pending appointment in a successful response
+     * @apiNote Returns 400 for invalid input, 403 for unauthorized patient access,
+     *          404 when the doctor or patient does not exist, and 409 when the
+     *          requested slot is unavailable.
+     */
     @PostMapping("/patients/{patientId}")
     @PreAuthorize("hasRole('ADMIN') or @appointmentService.isPatientSelf(#patientId, authentication.name)")
     public ResponseEntity<ApiResponse<AppointmentResponse>> bookAppointment(
             @PathVariable Long patientId,
             @Valid @RequestBody AppointmentRequest request) {
+        // Resolve both profiles, verify slot availability, persist a PENDING
+        // appointment, and dispatch the booking confirmation asynchronously.
         AppointmentResponse booked = appointmentService.bookAppointment(patientId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Appointment booked successfully", booked));
