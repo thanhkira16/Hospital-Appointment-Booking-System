@@ -74,12 +74,23 @@ public class AppointmentController {
         return ResponseEntity.ok(ApiResponse.success("Appointment fetched successfully", appointment));
     }
 
-    // A patient views their own appointment history; ADMIN can view any patient's
+    /**
+     * Retrieves a paginated list of appointments for a specified patient.
+     * Patients may view only their own appointment history, while administrators
+     * can view any patient's appointments.
+     *
+     * @param patientId the patient identifier whose appointments are retrieved
+     * @param pageable pagination and sorting parameters (defaults to 10 per page, sorted by appointmentDate)
+     * @return a paginated list of appointments in a successful response
+     * @apiNote Returns 403 when the caller is not authorized to access the patient's data,
+     *          and 404 when an administrator requests appointments for a non-existent patient.
+     */
     @GetMapping("/patients/{patientId}")
     @PreAuthorize("hasRole('ADMIN') or @appointmentService.isPatientSelf(#patientId, authentication.name)")
     public ResponseEntity<ApiResponse<com.sahil.hospital_appointment.dto.PageResponse<AppointmentResponse>>> getAppointmentsByPatient(
             @PathVariable Long patientId,
             @org.springframework.data.web.PageableDefault(size = 10, sort = "appointmentDate") org.springframework.data.domain.Pageable pageable) {
+        // Verify patient existence, query matching appointments with pagination, and map them to response DTOs.
         var appointments = appointmentService.getAppointmentsByPatient(patientId, pageable);
         return ResponseEntity.ok(ApiResponse.success("Appointments fetched successfully", appointments));
     }
