@@ -33,7 +33,7 @@ A production-style REST API for managing hospital appointments, built with Java 
 Layered architecture throughout: **Controller → Service → Repository**, with DTOs at every API boundary (entities are never exposed directly).
 
 ```
-src/main/java/com/sahil/hospital_appointment/
+src/main/java/com/fpt/hospital_appointment/
 ├── config/          # Security, Swagger, Async configuration
 ├── controller/       # REST endpoints
 ├── dto/              # Request/Response DTOs + ApiResponse/PageResponse wrappers
