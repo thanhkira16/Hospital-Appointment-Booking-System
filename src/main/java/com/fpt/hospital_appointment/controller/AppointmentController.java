@@ -115,10 +115,20 @@ public class AppointmentController {
         var appointments = appointmentService.getAppointmentsByDoctor(doctorId, pageable);
         return ResponseEntity.ok(ApiResponse.success("Appointments fetched successfully", appointments));
     }
-    // Only the doctor involved (or ADMIN) can confirm a pending appointment
+    /**
+     * Confirms a pending appointment. Only the assigned doctor or an administrator
+     * is permitted to confirm the appointment.
+     *
+     * @param id the appointment identifier to confirm
+     * @return the updated appointment details in a successful response
+     * @apiNote Returns 400 if the appointment is not in a PENDING state,
+     *          403 when the caller is not the assigned doctor or an administrator,
+     *          and 404 when an administrator requests a non-existent appointment.
+     */
     @PatchMapping("/{id}/confirm")
     @PreAuthorize("hasRole('ADMIN') or @appointmentService.isDoctorOwner(#id, authentication.name)")
     public ResponseEntity<ApiResponse<AppointmentResponse>> confirmAppointment(@PathVariable Long id) {
+        // Validate PENDING status transition, persist CONFIRMED state, and dispatch confirmation notice.
         AppointmentResponse updated = appointmentService.confirmAppointment(id);
         return ResponseEntity.ok(ApiResponse.success("Appointment confirmed successfully", updated));
     }
