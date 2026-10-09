@@ -21,6 +21,6 @@ class SecurityConfigTest {
         // 1. Pretend an unauthenticated anonymous user tries to sneak into a protected endpoint (/api/doctors)
         mockMvc.perform(get("/api/doctors"))
                 // 2. Assert and verify that the firewall intercepts them and returns a 403 Forbidden status code
-                .andExpect(status().isForbidden()); // If it returns 200 OK instead, the test fails, warning you that your security is broken!
+                .andExpect(status().isUnauthorized());
     }
 }

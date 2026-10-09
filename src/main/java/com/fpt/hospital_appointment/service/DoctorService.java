@@ -6,18 +6,15 @@ import com.fpt.hospital_appointment.exception.ResourceNotFoundException;
 import com.fpt.hospital_appointment.model.Doctor;
 import com.fpt.hospital_appointment.repository.DoctorRepository;
 import com.fpt.hospital_appointment.service.mapper.DoctorMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
- import com.fpt.hospital_appointment.dto.PageResponse;
- import com.fpt.hospital_appointment.service.specification.DoctorSpecification;
- import org.springframework.data.domain.Page;
- import org.springframework.data.domain.Pageable;
+import com.fpt.hospital_appointment.dto.PageResponse;
+import com.fpt.hospital_appointment.service.specification.DoctorSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
-@RequiredArgsConstructor
 public class DoctorService {
-
     private final DoctorRepository doctorRepository;
     private final DoctorMapper doctorMapper;
 
@@ -36,13 +33,11 @@ public class DoctorService {
     @Transactional
     public DoctorResponse updateDoctorProfile(Long id, DoctorProfileRequest request) {
         Doctor doctor = findDoctorOrThrow(id);
-
         doctor.setSpecialization(request.getSpecialization());
         doctor.setQualification(request.getQualification());
         doctor.setYearsOfExperience(request.getYearsOfExperience());
         doctor.setPhoneNumber(request.getPhoneNumber());
         doctor.setConsultationFee(request.getConsultationFee());
-
         Doctor updated = doctorRepository.save(doctor);
         return doctorMapper.toResponse(updated);
     }
@@ -55,22 +50,18 @@ public class DoctorService {
 
     @Transactional(readOnly = true)
     public Doctor findDoctorOrThrow(Long id) {
-        return doctorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor", id));
+        return doctorRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Doctor", id));
     }
 
     @Transactional(readOnly = true)
     public DoctorResponse getDoctorByEmail(String email) {
-        Doctor doctor = doctorRepository.findByUserEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor profile not found for current user"));
+        Doctor doctor = doctorRepository.findByUserEmail(email).orElseThrow(() -> new ResourceNotFoundException("Doctor profile not found for current user"));
         return doctorMapper.toResponse(doctor);
     }
 
     @Transactional(readOnly = true)
     public boolean isOwner(Long doctorId, String currentUserEmail) {
-        return doctorRepository.findById(doctorId)
-                .map(doctor -> doctor.getUser().getEmail().equals(currentUserEmail))
-                .orElse(false);
+        return doctorRepository.findById(doctorId).map(doctor -> doctor.getUser().getEmail().equals(currentUserEmail)).orElse(false);
     }
 
     @Transactional(readOnly = true)
@@ -78,5 +69,10 @@ public class DoctorService {
         var spec = DoctorSpecification.buildSearchSpecification(specialization, minExperience, maxFee);
         Page<DoctorResponse> page = doctorRepository.findAll(spec, pageable).map(doctorMapper::toResponse);
         return PageResponse.from(page);
+    }
+
+    public DoctorService(final DoctorRepository doctorRepository, final DoctorMapper doctorMapper) {
+        this.doctorRepository = doctorRepository;
+        this.doctorMapper = doctorMapper;
     }
 }

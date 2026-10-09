@@ -8,10 +8,8 @@ import com.fpt.hospital_appointment.model.AppointmentStatus;
 import com.fpt.hospital_appointment.model.DoctorSchedule;
 import com.fpt.hospital_appointment.repository.AppointmentRepository;
 import com.fpt.hospital_appointment.repository.DoctorScheduleRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,9 +30,7 @@ import java.util.stream.Collectors;
  * shown to a patient are guaranteed to match what booking will accept.
  */
 @Service
-@RequiredArgsConstructor
 public class SlotService {
-
     private final DoctorScheduleRepository scheduleRepository;
     private final AppointmentRepository appointmentRepository;
     private final DoctorService doctorService;
@@ -42,65 +38,43 @@ public class SlotService {
     @Transactional(readOnly = true)
     public SlotResponse getAvailableSlots(Long doctorId, LocalDate date) {
         doctorService.findDoctorOrThrow(doctorId); // 404 if doctor doesn't exist
-
         if (date.isBefore(LocalDate.now())) {
             throw new InvalidRequestException("Cannot fetch slots for a past date");
         }
-
         DayOfWeek dayOfWeek = date.getDayOfWeek();
-
         // Step 1: find this doctor's active working-hours windows for
         // this day of the week (e.g. all "MONDAY" schedule rows)
-        List<DoctorSchedule> schedules =
-                scheduleRepository.findByDoctorIdAndDayOfWeekAndActiveTrue(doctorId, dayOfWeek);
-
+        List<DoctorSchedule> schedules = scheduleRepository.findByDoctorIdAndDayOfWeekAndActiveTrue(doctorId, dayOfWeek);
         if (schedules.isEmpty()) {
             // Doctor simply doesn't work on this day - empty list, not an error
-            return SlotResponse.builder()
-                    .doctorId(doctorId)
-                    .date(date)
-                    .availableSlots(List.of())
-                    .build();
+            return SlotResponse.builder().doctorId(doctorId).date(date).availableSlots(List.of()).build();
         }
-
         // Step 2: gather times already booked on this date (excluding
         // CANCELLED appointments - a cancelled slot frees back up)
-        Set<LocalTime> bookedTimes = appointmentRepository
-                .findByDoctorIdAndAppointmentDate(doctorId, date)
-                .stream()
-                .filter(appointment -> appointment.getStatus() != AppointmentStatus.CANCELLED)
-                .map(Appointment::getAppointmentTime)
-                .collect(Collectors.toSet());
-
+        Set<LocalTime> bookedTimes = appointmentRepository.findByDoctorIdAndAppointmentDate(doctorId, date).stream().filter(appointment -> appointment.getStatus() != AppointmentStatus.CANCELLED).map(Appointment::getAppointmentTime).collect(Collectors.toSet());
         boolean isToday = date.isEqual(LocalDate.now());
         LocalTime now = LocalTime.now();
-
         List<LocalTime> availableSlots = new ArrayList<>();
         Integer slotDuration = null;
-
         // Step 3: slice each schedule window into fixed-size slots
         for (DoctorSchedule schedule : schedules) {
             slotDuration = schedule.getSlotDurationMinutes(); // assumes one duration per doctor for simplicity
-            LocalTime slotStart = schedule.getStartTime();
-
-            while (slotStart.plusMinutes(schedule.getSlotDurationMinutes()).compareTo(schedule.getEndTime()) <= 0) {
+            if (slotDuration == null || slotDuration <= 0) {
+                throw new InvalidRequestException("Slot duration must be positive");
+            }
+            LocalDateTime slotStartDateTime = date.atTime(schedule.getStartTime());
+            LocalDateTime windowEnd = date.atTime(schedule.getEndTime());
+            while (!slotStartDateTime.plusMinutes(slotDuration).isAfter(windowEnd)) {
+                LocalTime slotStart = slotStartDateTime.toLocalTime();
                 boolean alreadyBooked = bookedTimes.contains(slotStart);
                 boolean isPastTime = isToday && slotStart.isBefore(now);
-
                 if (!alreadyBooked && !isPastTime) {
                     availableSlots.add(slotStart);
                 }
-
-                slotStart = slotStart.plusMinutes(schedule.getSlotDurationMinutes());
+                slotStartDateTime = slotStartDateTime.plusMinutes(slotDuration);
             }
         }
-
-        return SlotResponse.builder()
-                .doctorId(doctorId)
-                .date(date)
-                .slotDurationMinutes(slotDuration)
-                .availableSlots(availableSlots)
-                .build();
+        return SlotResponse.builder().doctorId(doctorId).date(date).slotDurationMinutes(slotDuration).availableSlots(availableSlots.stream().distinct().sorted().toList()).build();
     }
 
     /**
@@ -111,10 +85,14 @@ public class SlotService {
     @Transactional(readOnly = true)
     public void validateSlotAvailability(Long doctorId, LocalDate date, LocalTime time) {
         SlotResponse slots = getAvailableSlots(doctorId, date);
-
         if (!slots.getAvailableSlots().contains(time)) {
-            throw new SlotUnavailableException(
-                    "The selected time slot (" + time + " on " + date + ") is not available for this doctor");
+            throw new SlotUnavailableException("The selected time slot (" + time + " on " + date + ") is not available for this doctor");
         }
+    }
+
+    public SlotService(final DoctorScheduleRepository scheduleRepository, final AppointmentRepository appointmentRepository, final DoctorService doctorService) {
+        this.scheduleRepository = scheduleRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.doctorService = doctorService;
     }
 }

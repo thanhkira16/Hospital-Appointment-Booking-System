@@ -88,11 +88,11 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-The API will be available at `http://localhost:8081`.
+The API will be available at `http://localhost:8082`.
 
 5. Open Swagger UI to explore and test the API interactively:
 ```
-http://localhost:8081/swagger-ui.html
+http://localhost:8082/swagger-ui.html
 ```
 
 ### Running Tests
