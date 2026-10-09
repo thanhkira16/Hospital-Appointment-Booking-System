@@ -64,15 +64,16 @@ cd hospital-appointment-api
 ```powershell
 Get-Content hospital_db.sql -Raw | C:\xampp\mysql\bin\mysql.exe -u root
 ```
-You can also open phpMyAdmin at `http://localhost/phpmyadmin`, choose **Import**, select `hospital_db.sql`, and run it. The script can be imported again without duplicating the demo accounts, profiles, schedules, or same-date appointments. It creates one admin, two doctors, two patients, weekly schedules, example appointments across the lifecycle statuses, and one medical record. All demo accounts use password `Password123!`:
+You can also open phpMyAdmin at `http://localhost/phpmyadmin`, choose **Import**, select `hospital_db.sql`, and run it. The script can be imported again without duplicating the demo accounts, profiles, schedules, or same-date appointments. It creates one admin, three doctors, two patients, weekly schedules, example appointments across the lifecycle statuses, and medical records. All demo accounts use password `Password123!`:
 
-| Role | Email |
-|---|---|
-| Admin | `admin@hospital.test` |
-| Doctor | `minh.anh.doctor@hospital.test` |
-| Doctor | `quoc.bao.doctor@hospital.test` |
-| Patient | `thu.ha.patient@hospital.test` |
-| Patient | `gia.huy.patient@hospital.test` |
+| Role | Name | Email | Password |
+|---|---|---|---|
+| Admin | System Administrator | `thanhtch.22git@vku.udn.vn` | `Password123!` |
+| Doctor | Nguyen Minh Anh | `minh.anh.doctor@hospital.test` | `Password123!` |
+| Doctor | Tran Quoc Bao | `quoc.bao.doctor@hospital.test` | `Password123!` |
+| Doctor | Bác sĩ Nguyễn An | `hthanh16092004@gmail.com` | `Password123!` |
+| Patient | Le Thu Ha | `thu.ha.patient@hospital.test` | `Password123!` |
+| Patient | Pham Gia Huy | `gia.huy.patient@hospital.test` | `Password123!` |
 
 3. `src/main/resources/application.properties` is ready for a local XAMPP install using `root` with an empty password. If your MySQL root account has a password, set `DB_PASSWORD` before starting the application. Set `JWT_SECRET` to use a custom JWT key:
 ```properties
