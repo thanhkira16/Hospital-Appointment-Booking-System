@@ -6,13 +6,14 @@ import { AppLayout } from './shared/layout/AppLayout'
 import { FeatureErrorBoundary } from './routes/FeatureErrorBoundary'
 import { RequireAuth } from './routes/RequireAuth'
 import { RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
-import { AdminManagementPage, DashboardPage } from './features/dashboard/DashboardPage'
+import { DashboardPage } from './features/dashboard/DashboardPage'
 import { RegisterPage, SignInPage } from './features/auth/pages'
 import { DoctorDetailPage, DoctorListPage } from './features/doctors/pages'
 import { PatientDetailPage, PatientListPage } from './features/patients/pages'
 import { ScheduleManagementPage } from './features/schedules/pages'
 import { BookingPage } from './features/appointments/BookingPage'
 import { AppointmentDetailPage, AppointmentListPage } from './features/appointments/pages'
+import { AdminPage } from './features/admin/AdminPage'
 
 const feature = (node: ReactNode) => <FeatureErrorBoundary>{node}</FeatureErrorBoundary>
 
@@ -44,7 +45,7 @@ function Application() {
           </Route>
           <Route path="patients/:patientId" element={feature(<PatientDetailPage />)} />
           <Route element={<RequireAuth roles={['ADMIN']} />}>
-            <Route path="admin" element={feature(<AdminManagementPage />)} />
+            <Route path="admin" element={feature(<AdminPage />)} />
           </Route>
           <Route element={<RequireAuth roles={['ADMIN', 'DOCTOR']} />}>
             <Route path="doctor" element={feature(<ScheduleManagementPage />)} />
