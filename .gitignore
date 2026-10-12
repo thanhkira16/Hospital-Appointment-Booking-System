@@ -6,7 +6,7 @@ frontend/vite-run.log*
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
+outputs/
 ### STS ###
 .apt_generated
 .classpath

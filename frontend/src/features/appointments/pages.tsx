@@ -120,7 +120,7 @@ export function AppointmentDetailPage() {
   const appointment = useQuery({ queryKey: ['appointment', id], queryFn: () => apiRequest<Appointment>(`/api/appointments/${id}`), enabled: Number.isSafeInteger(id) && id > 0 })
   const changeStatus = useMutation({
     mutationFn: ({ action, reason }: { action: 'confirm' | 'complete' | 'cancel'; reason?: string }) => apiRequest<Appointment>(`/api/appointments/${id}/${action}`, { method: 'PATCH', ...(reason === undefined ? {} : { body: JSON.stringify({ cancellationReason: reason }) }) }),
-    onSuccess: (updated) => { queryClient.setQueryData(['appointment', id], updated); void queryClient.invalidateQueries({ queryKey: ['appointments'] }); setCancelOpen(false); setCancelReason('') },
+    onSuccess: (updated) => { queryClient.setQueryData(['appointment', id], updated); void queryClient.invalidateQueries({ queryKey: ['appointments'] }); void queryClient.invalidateQueries({ queryKey: ['dashboard'] }); setCancelOpen(false); setCancelReason('') },
   })
   const data = appointment.data
   const canDoctorAct = Boolean(data && (isAdmin || (isDoctor && data.status !== 'CANCELLED' && data.status !== 'COMPLETED')))
