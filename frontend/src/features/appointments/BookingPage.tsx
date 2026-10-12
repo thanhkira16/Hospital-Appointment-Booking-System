@@ -8,7 +8,8 @@ import { StatusPanel } from '../../shared/components/StatusPanel'
 
 interface Doctor { id: number; fullName: string; specialization: string; consultationFee: number }
 interface Patient { id: number; fullName: string; email: string }
-interface SlotResponse { doctorId: number; date: string; slotDurationMinutes: number; availableSlots: string[] }
+interface DaySlot { startTime: string; endTime: string; state: 'AVAILABLE' | 'BOOKED' | 'PAST' }
+interface DayResponse { doctorId: number; date: string; slotDurationMinutes: number | null; slots: DaySlot[] }
 interface Appointment { id: number; doctorName: string; appointmentDate: string; appointmentTime: string; status: string }
 
 function money(value: number) {
@@ -37,8 +38,8 @@ export function BookingPage() {
   })
   const patient = useQuery({ queryKey: ['patient', 'me'], queryFn: () => apiRequest<Patient>('/api/patients/me') })
   const slots = useQuery({
-    queryKey: ['doctor', doctorId, 'slots', date],
-    queryFn: () => apiRequest<SlotResponse>(`/api/doctors/${doctorId}/slots?date=${date}`),
+    queryKey: ['doctor', doctorId, 'slots', 'day', date],
+    queryFn: () => apiRequest<DayResponse>(`/api/doctors/${doctorId}/slots/day?date=${date}`),
     enabled: Number.isSafeInteger(doctorId) && doctorId > 0 && Boolean(date),
   })
   const booking = useMutation({
@@ -53,6 +54,9 @@ export function BookingPage() {
       }
     },
   })
+
+  const visibleSlots = (slots.data?.slots ?? []).filter((slot) => slot.state !== 'PAST')
+  const freeCount = visibleSlots.filter((slot) => slot.state === 'AVAILABLE').length
 
   function changeDate(value: string) {
     setDate(value)
@@ -84,8 +88,8 @@ export function BookingPage() {
           </label>
           {slots.isPending ? <StatusPanel kind="loading" title="Đang tải giờ khám còn trống" description="Đang kiểm tra lịch đã đặt." /> : null}
           {slots.isError ? <StatusPanel kind="error" title="Không tải được giờ khám" description={slots.error.message} onRetry={() => void slots.refetch()} /> : null}
-          {slots.data && slots.data.availableSlots.length === 0 ? <StatusPanel kind="empty" title="Không còn giờ khám trống" description="Hãy chọn ngày khác để tìm lịch phù hợp." /> : null}
-          {slots.data && slots.data.availableSlots.length > 0 && <fieldset className="slot-picker"><legend>Giờ khám</legend><div className="slot-grid">{slots.data.availableSlots.map((slot) => <label className={`slot-option${selectedSlot === timeLabel(slot) ? ' slot-option--selected' : ''}`} key={slot}><input type="radio" name="appointment-slot" value={timeLabel(slot)} checked={selectedSlot === timeLabel(slot)} onChange={(event) => setSelectedSlot(event.target.value)} /><span>{timeLabel(slot)}</span></label>)}</div></fieldset>}
+          {slots.data && freeCount === 0 ? <StatusPanel kind="empty" title="Không còn giờ khám trống" description="Hãy chọn ngày khác để tìm lịch phù hợp." /> : null}
+          {slots.data && visibleSlots.length > 0 && <fieldset className="slot-picker"><legend>Giờ khám</legend><div className="slot-grid">{visibleSlots.map((slot) => { const label = timeLabel(slot.startTime); const taken = slot.state !== 'AVAILABLE'; return <label className={`slot-option${selectedSlot === label ? ' slot-option--selected' : ''}${taken ? ' slot-option--booked' : ''}`} key={slot.startTime}><input type="radio" name="appointment-slot" value={label} disabled={taken} checked={selectedSlot === label} onChange={(event) => setSelectedSlot(event.target.value)} /><span>{label}{slot.state === 'BOOKED' ? ' · Đã đặt' : ''}</span></label> })}</div><p className="slot-legend">Khung giờ gạch mờ đã có bệnh nhân khác đặt và không thể chọn.</p></fieldset>}
           <label className="field">Lý do khám <span className="field-hint">Không bắt buộc, tối đa 500 ký tự</span>
             <textarea value={reason} maxLength={500} rows={4} onChange={(event) => setReason(event.target.value)} />
           </label>
