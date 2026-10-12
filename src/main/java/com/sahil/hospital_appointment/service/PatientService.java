@@ -66,6 +66,13 @@ public class PatientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", id));
     }
 
+    @Transactional(readOnly = true)
+    public PatientResponse getPatientByEmail(String email) {
+        Patient patient = patientRepository.findByUserEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for current user"));
+        return patientMapper.toResponse(patient);
+    }
+
     // Used for authorization checks in the Controller: "does this patient
     // record belong to the currently logged-in user?"
     @Transactional(readOnly = true)

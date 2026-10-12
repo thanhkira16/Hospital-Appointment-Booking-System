@@ -60,6 +60,13 @@ public class DoctorService {
     }
 
     @Transactional(readOnly = true)
+    public DoctorResponse getDoctorByEmail(String email) {
+        Doctor doctor = doctorRepository.findByUserEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor profile not found for current user"));
+        return doctorMapper.toResponse(doctor);
+    }
+
+    @Transactional(readOnly = true)
     public boolean isOwner(Long doctorId, String currentUserEmail) {
         return doctorRepository.findById(doctorId)
                 .map(doctor -> doctor.getUser().getEmail().equals(currentUserEmail))
