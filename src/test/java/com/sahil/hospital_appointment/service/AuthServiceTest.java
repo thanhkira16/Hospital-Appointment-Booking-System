@@ -24,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 /**
  * Pure unit test - all dependencies are mocked, so this runs in
@@ -53,6 +55,19 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("already registered");
+    }
+
+    @Test
+    void register_shouldRejectAdminRole_withoutCreatingUser() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("admin@test.com");
+        request.setRole(Role.ADMIN);
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("not available for ADMIN");
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
