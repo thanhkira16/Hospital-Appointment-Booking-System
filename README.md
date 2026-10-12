@@ -60,17 +60,11 @@ git clone https://github.com/Sahil-Patil123/hospital-appointment-api.git
 cd hospital-appointment-api
 ```
 
-2. Start **MySQL** in the XAMPP Control Panel, then create the database in phpMyAdmin (`http://localhost/phpmyadmin`) or run:
-```sql
-CREATE DATABASE IF NOT EXISTS hospital_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-The project defaults to XAMPP's usual `root` account with an empty password. If your MySQL root account has a password, set `DB_PASSWORD` in the environment before starting the application.
-
-Optional sample data is in `database/sample-data.sql`. Import it from the project root with:
+2. Start **MySQL** in the XAMPP Control Panel. From the project root, import `hospital_db.sql`; this creates `hospital_db` and inserts the sample data:
 ```powershell
-Get-Content database/sample-data.sql -Raw | C:\xampp\mysql\bin\mysql.exe -u root hospital_db
+Get-Content hospital_db.sql -Raw | C:\xampp\mysql\bin\mysql.exe -u root
 ```
-The seed is safe to run more than once. It creates an admin, two doctors, two patients, weekly schedules, example appointments in each lifecycle status, and one medical record. All demo accounts use password `Password123!`:
+You can also open phpMyAdmin at `http://localhost/phpmyadmin`, choose **Import**, select `hospital_db.sql`, and run it. The script can be imported again without duplicating the demo accounts, profiles, schedules, or same-date appointments. It creates one admin, two doctors, two patients, weekly schedules, example appointments across the lifecycle statuses, and one medical record. All demo accounts use password `Password123!`:
 
 | Role | Email |
 |---|---|
@@ -80,10 +74,9 @@ The seed is safe to run more than once. It creates an admin, two doctors, two pa
 | Patient | `thu.ha.patient@hospital.test` |
 | Patient | `gia.huy.patient@hospital.test` |
 
-3. `src/main/resources/application.properties` is ready for a local XAMPP install. Set these environment variables if you use custom credentials or want a custom JWT key:
+3. `src/main/resources/application.properties` is ready for a local XAMPP install using `root` with an empty password. If your MySQL root account has a password, set `DB_PASSWORD` before starting the application. Set `JWT_SECRET` to use a custom JWT key:
 ```properties
 DB_USERNAME=root
-DB_PASSWORD=
 JWT_SECRET=replace-with-a-random-secret-of-at-least-32-characters
 ```
 Email notifications are optional for local API use; configure `MAIL_USERNAME` and `MAIL_PASSWORD` with a Gmail App Password to enable SMTP.

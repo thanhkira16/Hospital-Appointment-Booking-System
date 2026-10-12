@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.core.Authentication;
+
 @RestController
 @RequestMapping("/api/patients")
 @RequiredArgsConstructor
@@ -26,6 +28,13 @@ public class PatientController {
             @PageableDefault(size = 10, sort = "id") Pageable pageable) {
         var patients = patientService.getAllPatients(pageable);
         return ResponseEntity.ok(ApiResponse.success("Patients fetched successfully", patients));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<ApiResponse<PatientResponse>> getCurrentPatient(Authentication authentication) {
+        PatientResponse patient = patientService.getPatientByEmail(authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success("Current patient profile fetched successfully", patient));
     }
 
     @GetMapping("/{id}")

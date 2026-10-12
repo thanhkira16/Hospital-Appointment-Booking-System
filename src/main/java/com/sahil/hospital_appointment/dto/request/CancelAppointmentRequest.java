@@ -1,6 +1,7 @@
 package com.sahil.hospital_appointment.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,5 +19,6 @@ import lombok.Setter;
 public class CancelAppointmentRequest {
 
     @NotBlank(message = "Cancellation reason is required")
+    @Size(max = 500, message = "Cancellation reason must not exceed 500 characters")
     private String cancellationReason;
 }

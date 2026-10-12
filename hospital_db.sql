@@ -1,6 +1,9 @@
--- Idempotent sample data for the Hospital Appointment Booking System.
--- Demo password for every account below: Password123!
--- Run with: mysql -u root hospital_db < database/sample-data.sql
+-- Complete database setup and idempotent sample data for Hospital Appointment Booking System.
+-- Demo password for every account: Password123!
+-- Import this file once to create hospital_db and seed its tables.
+
+CREATE DATABASE IF NOT EXISTS hospital_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE hospital_db;
 
 START TRANSACTION;
 

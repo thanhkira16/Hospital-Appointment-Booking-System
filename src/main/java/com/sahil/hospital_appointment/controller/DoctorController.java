@@ -14,6 +14,8 @@ import com.sahil.hospital_appointment.dto.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
+import org.springframework.security.core.Authentication;
+
 @RestController
 @RequestMapping("/api/doctors")
 @RequiredArgsConstructor
@@ -26,6 +28,13 @@ public class DoctorController {
             @PageableDefault(size = 10, sort = "id") Pageable pageable) {
         var doctors = doctorService.getAllDoctors(pageable);
         return ResponseEntity.ok(ApiResponse.success("Doctors fetched successfully", doctors));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<ApiResponse<DoctorResponse>> getCurrentDoctor(Authentication authentication) {
+        DoctorResponse doctor = doctorService.getDoctorByEmail(authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success("Current doctor profile fetched successfully", doctor));
     }
 
     @GetMapping("/{id}")
