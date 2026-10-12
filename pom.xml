@@ -71,6 +71,14 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- In-memory database for repeatable integration tests. -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- JPA testing starter (required for DataJpaTest in version 4.1.0) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

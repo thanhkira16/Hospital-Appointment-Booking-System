@@ -83,6 +83,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(any())).thenReturn("hashed");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
+            assertThat(u.isEnabled()).isTrue();
             u.setId(1L);
             return u;
         });
@@ -108,6 +109,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(any())).thenReturn("hashed-password");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
+            assertThat(u.isEnabled()).isTrue();
             u.setId(1L);
             return u;
         });
@@ -120,5 +122,21 @@ class AuthServiceTest {
         assertThat(response.getRole()).isEqualTo(Role.PATIENT);
         assertThat(response.getToken()).isEqualTo("fake-jwt-token");
         assertThat(response.getTokenType()).isEqualTo("Bearer");
+    }
+    @Test
+    void register_shouldRejectFutureDateOfBirth() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("future.patient@test.com");
+        request.setFullName("Patient");
+        request.setPassword("password123");
+        request.setRole(Role.PATIENT);
+        request.setDateOfBirth(java.time.LocalDate.now().plusDays(1).toString());
+        request.setGender("MALE");
+        request.setAddress("Test address");
+        request.setPhoneNumber("0900000000");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        assertThatThrownBy(() -> authService.register(request)).isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("Date of birth must be in the past");
+        verify(patientRepository, never()).save(any());
     }
 }

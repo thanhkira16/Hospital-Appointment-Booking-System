@@ -34,6 +34,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        request.setEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
         if (request.getRole() == Role.ADMIN) {
             throw new InvalidRequestException("Public registration is not available for ADMIN");
         }
@@ -51,6 +52,7 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        request.setEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
@@ -76,6 +78,9 @@ public class AuthService {
             dateOfBirth = LocalDate.parse(request.getDateOfBirth());
         } catch (DateTimeParseException ex) {
             throw new InvalidRequestException("dateOfBirth must be in YYYY-MM-DD format");
+        }
+        if (!dateOfBirth.isBefore(LocalDate.now())) {
+            throw new InvalidRequestException("Date of birth must be in the past");
         }
         Patient patient = Patient.builder().user(user).dateOfBirth(dateOfBirth).gender(request.getGender()).phoneNumber(request.getPhoneNumber()).address(request.getAddress()).medicalHistory(request.getMedicalHistory()).build();
         patientRepository.save(patient);
