@@ -5,7 +5,8 @@ import { Dialog } from './shared/components/Dialog'
 import { AppLayout } from './shared/layout/AppLayout'
 import { FeatureErrorBoundary } from './routes/FeatureErrorBoundary'
 import { RequireAuth } from './routes/RequireAuth'
-import { DashboardPage, RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
+import { RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
+import { DashboardPage } from './features/dashboard/DashboardPage'
 import { RegisterPage, SignInPage } from './features/auth/pages'
 
 const feature = (node: ReactNode) => <FeatureErrorBoundary>{node}</FeatureErrorBoundary>
