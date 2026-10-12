@@ -26,8 +26,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 
   const envelope = await readEnvelope<T>(response)
   if (response.status === 401) {
-    onSessionExpired()
-    throw new ApiError('Phiên làm việc đã hết hạn.', 401)
+    if (token && path !== '/api/auth/login') {
+      onSessionExpired()
+      throw new ApiError('Phiên làm việc đã hết hạn.', 401)
+    }
+    throw new ApiError(envelope?.message || 'Email hoặc mật khẩu không chính xác.', 401)
   }
   if (!response.ok || !envelope?.success) {
     throw new ApiError(
