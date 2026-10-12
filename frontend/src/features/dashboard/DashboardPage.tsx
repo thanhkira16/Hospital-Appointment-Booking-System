@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { compareSchedules } from '../../shared/scheduleOrder'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { apiRequest } from '../../shared/api/client'
@@ -19,6 +20,16 @@ type Appointment = {
 }
 type Doctor = { id: number; fullName: string; specialization: string }
 type Patient = { id: number; fullName: string; email: string }
+
+async function allAppointments(url: string): Promise<PageResponse<Appointment>> {
+  const first = await apiRequest<PageResponse<Appointment>>(`${url}?page=0&size=50&sort=appointmentDate,desc`)
+  const content = [...first.content]
+  for (let page = 1; page < first.totalPages; page++) {
+    const next = await apiRequest<PageResponse<Appointment>>(`${url}?page=${page}&size=50&sort=appointmentDate,desc`)
+    content.push(...next.content)
+  }
+  return { ...first, content }
+}
 
 const statusLabels: Record<Appointment['status'], string> = {
   PENDING: 'Chờ xác nhận',
@@ -61,8 +72,9 @@ function Widget({
     {controls}
     {loading ? <StatusPanel kind="loading" title="Đang tải dữ liệu" />
       : error ? <StatusPanel kind="error" title="Không thể tải dữ liệu" description="Có thể thử lại riêng phần này." onRetry={retry} />
-        : empty ? <div className="widget-empty"><StatusPanel kind="empty" title={empty.title} description={empty.description} />
-          <Link className="button button--primary" to={empty.to}>{empty.cta}</Link>
+        : empty ? <div className="widget-empty">
+          <div className="widget-empty__content"><h3>{empty.title}</h3><p>{empty.description}</p></div>
+          <Link className="button button--secondary" to={empty.to}>{empty.cta}</Link>
         </div> : children}
   </section>
 }
@@ -72,7 +84,7 @@ function AppointmentList({ appointments, role }: { appointments: Appointment[]; 
   return <ul className="dashboard-list">
     {appointments.map((appointment) => <li key={appointment.id}>
       <div>
-        <strong>{role === 'PATIENT' ? appointment.doctorName : appointment.patientName}</strong>
+        <Link to={`/appointments/${appointment.id}`}><strong>{role === 'PATIENT' ? appointment.doctorName : appointment.patientName}</strong></Link>
         <span>{formatAppointment(appointment)}</span>
       </div>
       <span className={`appointment-status appointment-status--${appointment.status.toLowerCase()}`}>{statusLabels[appointment.status]}</span>
@@ -84,14 +96,14 @@ function RoleShortcuts({ role }: { role: Role }) {
   const shortcuts = role === 'PATIENT'
     ? [
       { to: '/doctors', title: 'Tìm bác sĩ', text: 'Xem bác sĩ và lịch khám hàng tuần.' },
-      { to: '/dashboard#appointments', title: 'Cuộc hẹn', text: 'Theo dõi lịch sắp tới và lịch sử.' },
-      { to: '/dashboard#records', title: 'Hồ sơ khám', text: 'Mở khu vực hồ sơ khám của bạn.' },
+      { to: '/appointments', title: 'Cuộc hẹn', text: 'Theo dõi lịch sắp tới và lịch sử.' },
+      { to: '/appointments', title: 'Hồ sơ khám', text: 'Mở cuộc hẹn đã hoàn thành để xem hồ sơ khám.' },
     ]
     : role === 'DOCTOR'
       ? [
-        { to: '/dashboard#appointments', title: 'Cuộc hẹn', text: 'Xem lịch và yêu cầu đang chờ.' },
+        { to: '/appointments', title: 'Cuộc hẹn', text: 'Xem lịch và yêu cầu đang chờ.' },
         { to: '/doctor', title: 'Lịch làm việc', text: 'Mở không gian quản lý lịch.' },
-        { to: '/dashboard#profile', title: 'Hồ sơ cá nhân', text: 'Xem thông tin tài khoản bác sĩ.' },
+        { to: '/doctors/me', title: 'Hồ sơ cá nhân', text: 'Xem và cập nhật thông tin bác sĩ.' },
       ]
       : [
         { to: '/admin', title: 'Công cụ quản trị', text: 'Mở khu vực quản trị hệ thống.' },
@@ -113,7 +125,7 @@ function PatientDashboard() {
   })
   const appointments = useQuery({
     queryKey: ['dashboard', 'patient-appointments', profile.data?.id],
-    queryFn: () => apiRequest<PageResponse<Appointment>>(`/api/appointments/patients/${profile.data!.id}?page=0&size=10&sort=appointmentDate,desc`),
+    queryFn: () => allAppointments(`/api/appointments/patients/${profile.data!.id}`),
     enabled: profile.data !== undefined,
   })
   const upcoming = appointments.data?.content.filter(isUpcoming) ?? []
@@ -146,9 +158,17 @@ function DoctorDashboard() {
   })
   const appointments = useQuery({
     queryKey: ['dashboard', 'doctor-appointments', profile.data?.id],
-    queryFn: () => apiRequest<PageResponse<Appointment>>(`/api/appointments/doctors/${profile.data!.id}?page=0&size=10&sort=appointmentDate,desc`),
+    queryFn: () => allAppointments(`/api/appointments/doctors/${profile.data!.id}`),
     enabled: profile.data !== undefined,
   })
+  const schedules = useQuery({
+    queryKey: ['doctor', profile.data?.id, 'schedules'],
+    queryFn: () => apiRequest<{ id: number; dayOfWeek: string; startTime: string; endTime: string; slotDurationMinutes: number; active: boolean }[]>(`/api/doctors/${profile.data!.id}/schedules`),
+    enabled: profile.data !== undefined,
+  })
+  const activeSchedules = schedules.data?.filter((schedule) => schedule.active).sort(compareSchedules) ?? []
+  const days: Record<string, string> = { MONDAY: 'Thứ Hai', TUESDAY: 'Thứ Ba', WEDNESDAY: 'Thứ Tư', THURSDAY: 'Thứ Năm', FRIDAY: 'Thứ Sáu', SATURDAY: 'Thứ Bảy', SUNDAY: 'Chủ nhật' }
+  const history = appointments.data?.content.filter((appointment) => appointment.status === 'COMPLETED' || appointment.status === 'CANCELLED') ?? []
   const upcoming = appointments.data?.content.filter(isUpcoming) ?? []
   const pending = appointments.data?.content.filter((appointment) => appointment.status === 'PENDING') ?? []
   return <>
@@ -163,6 +183,16 @@ function DoctorDashboard() {
       <Widget title="Cuộc hẹn cần xử lý" loading={profile.isPending || (profile.data !== undefined && appointments.isPending)} error={profile.isError || appointments.isError} retry={() => void (profile.isError ? profile.refetch() : appointments.refetch())}
         empty={pending.length ? undefined : { title: 'Không có yêu cầu đang chờ', description: 'Yêu cầu đặt lịch mới sẽ được hiển thị tại đây.', to: '/doctor', cta: 'Xem lịch làm việc' }}>
         <AppointmentList appointments={pending} role="DOCTOR" />
+      </Widget>
+      <Widget title="Lịch làm việc hàng tuần" loading={profile.isPending || (profile.data !== undefined && schedules.isPending)} error={profile.isError || schedules.isError} retry={() => void (profile.isError ? profile.refetch() : schedules.refetch())}
+        empty={activeSchedules.length ? undefined : { title: 'Chưa có lịch làm việc', description: 'Thêm khung giờ để bệnh nhân có thể đặt lịch.', to: '/doctor', cta: 'Thêm lịch làm việc' }}>
+        <ul className="dashboard-list dashboard-schedules">{activeSchedules.map((schedule) => <li key={schedule.id}><div><strong>{days[schedule.dayOfWeek] ?? schedule.dayOfWeek}</strong><span>{schedule.startTime.slice(0, 5)}–{schedule.endTime.slice(0, 5)} · {schedule.slotDurationMinutes} phút/lượt</span></div></li>)}</ul>
+        <Link className="button button--primary" to="/doctor">Quản lý lịch làm việc</Link>
+      </Widget>
+      <Widget title="Lịch sử cuộc hẹn gần đây" loading={profile.isPending || (profile.data !== undefined && appointments.isPending)} error={profile.isError || appointments.isError} retry={() => void appointments.refetch()}
+        empty={history.length ? undefined : { title: 'Chưa có lịch sử', description: 'Cuộc hẹn hoàn thành hoặc đã hủy sẽ xuất hiện ở đây.', to: '/appointments', cta: 'Xem tất cả cuộc hẹn' }}>
+        <AppointmentList appointments={history} role="DOCTOR" />
+        <Link className="button button--primary" to="/appointments">Xem tất cả cuộc hẹn</Link>
       </Widget>
     </div>
   </>

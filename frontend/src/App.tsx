@@ -1,11 +1,11 @@
-import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from './shared/auth/AuthProvider'
 import { Dialog } from './shared/components/Dialog'
 import { AppLayout } from './shared/layout/AppLayout'
 import { FeatureErrorBoundary } from './routes/FeatureErrorBoundary'
 import { RequireAuth } from './routes/RequireAuth'
-import { RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
+import { WelcomePage } from './features/foundation/pages'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { RegisterPage, SignInPage } from './features/auth/pages'
 import { DoctorDetailPage, DoctorListPage } from './features/doctors/pages'
@@ -39,7 +39,6 @@ function Application() {
           </Route>
             <Route path="appointments" element={feature(<AppointmentListPage />)} />
             <Route path="appointments/:appointmentId" element={feature(<AppointmentDetailPage />)} />
-          <Route path="patients/me" element={feature(<PatientDetailPage />)} />
           <Route element={<RequireAuth roles={['ADMIN', 'DOCTOR']} />}>
             <Route path="patients" element={feature(<PatientListPage />)} />
           </Route>
@@ -51,7 +50,7 @@ function Application() {
             <Route path="doctor" element={feature(<ScheduleManagementPage />)} />
           </Route>
           <Route element={<RequireAuth roles={['PATIENT']} />}>
-            <Route path="patient" element={feature(<RolePlaceholderPage title="Đặt lịch khám" description="Tìm bác sĩ và chọn khung giờ phù hợp." />)} />
+            <Route path="patient" element={<Navigate to="/doctors" replace />} />
           </Route>
         </Route>
         <Route path="*" element={feature(<WelcomePage />)} />
