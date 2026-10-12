@@ -6,12 +6,13 @@ const labels: Record<Role, string> = { ADMIN: 'Quản trị viên', DOCTOR: 'Bá
 const destinations: Record<Role, { to: string; label: string }[]> = {
   ADMIN: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/admin', label: 'Quản trị' }],
   DOCTOR: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/doctor', label: 'Lịch làm việc' }],
-  PATIENT: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/patient', label: 'Tìm bác sĩ và đặt lịch' }],
+  PATIENT: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/doctors', label: 'Tìm bác sĩ' }],
 }
 
 const routeLabels: Record<string, string> = {
   '/': 'Trang chủ',
   '/dashboard': 'Tổng quan',
+  '/doctors': 'Danh sách bác sĩ',
   '/admin': 'Quản trị',
   '/doctor': 'Lịch làm việc',
   '/patient': 'Đặt lịch khám',

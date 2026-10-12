@@ -83,7 +83,7 @@ function AppointmentList({ appointments, role }: { appointments: Appointment[]; 
 function RoleShortcuts({ role }: { role: Role }) {
   const shortcuts = role === 'PATIENT'
     ? [
-      { to: '/patient', title: 'Tìm bác sĩ', text: 'Xem bác sĩ và bắt đầu đặt lịch.' },
+      { to: '/doctors', title: 'Tìm bác sĩ', text: 'Xem bác sĩ và lịch khám hàng tuần.' },
       { to: '/dashboard#appointments', title: 'Cuộc hẹn', text: 'Theo dõi lịch sắp tới và lịch sử.' },
       { to: '/dashboard#records', title: 'Hồ sơ khám', text: 'Mở khu vực hồ sơ khám của bạn.' },
     ]
