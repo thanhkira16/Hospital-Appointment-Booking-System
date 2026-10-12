@@ -59,7 +59,7 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .account-tools { align-items: center; display: flex; gap: 1rem; }
 .account-identity { color: #e7f7f5; display: grid; font-size: .82rem; gap: .15rem; text-align: right; }
 .account-identity strong { font-size: .95rem; }
-.workspace-shell { display: grid; grid-template-columns: 15rem minmax(0, 1fr); margin: 0 auto; max-width: 1440px; min-height: calc(100vh - 4.5rem); }
+.workspace-shell { display: grid; grid-template-columns: 15rem minmax(0, 1fr); margin: 0; width: 100%; min-height: calc(100vh - 4.5rem); }
 .app-sidebar { background: #fff; border-right: 1px solid #d5e1e4; padding: 1.5rem 1rem; }
 .sidebar-label { color: #52606d; font-size: .76rem; font-weight: 750; letter-spacing: .08em; margin: 0 0 .75rem .75rem; text-transform: uppercase; }
 .app-sidebar nav { display: grid; gap: .35rem; }
