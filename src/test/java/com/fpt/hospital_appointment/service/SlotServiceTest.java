@@ -1,5 +1,6 @@
 package com.fpt.hospital_appointment.service;
 
+import com.fpt.hospital_appointment.dto.response.DaySlotResponse;
 import com.fpt.hospital_appointment.dto.response.SlotResponse;
 import com.fpt.hospital_appointment.exception.SlotUnavailableException;
 import com.fpt.hospital_appointment.model.*;
@@ -74,6 +75,28 @@ class SlotServiceTest {
         SlotResponse result = slotService.getAvailableSlots(1L, date);
 
         assertThat(result.getAvailableSlots()).isEmpty();
+    }
+
+    @Test
+    void adminDay_shouldShowWhoHoldsBookedSlot_andIgnoreCancelled() {
+        LocalDate date = nextMonday();
+        when(scheduleRepository.findByDoctorIdAndDayOfWeekAndActiveTrue(1L, DayOfWeek.MONDAY))
+                .thenReturn(List.of(buildSchedule(LocalTime.of(9, 0), LocalTime.of(10, 30), 30)));
+        User patientUser = User.builder().id(5L).fullName("Nguyen Van A").build();
+        Patient patient = Patient.builder().id(7L).user(patientUser).build();
+        Appointment booked = Appointment.builder().id(11L).patient(patient).appointmentDate(date)
+                .appointmentTime(LocalTime.of(9, 30)).status(AppointmentStatus.CONFIRMED).build();
+        Appointment cancelled = Appointment.builder().id(12L).patient(patient).appointmentDate(date)
+                .appointmentTime(LocalTime.of(10, 0)).status(AppointmentStatus.CANCELLED).build();
+        when(appointmentRepository.findByDoctorIdAndAppointmentDate(1L, date)).thenReturn(List.of(booked, cancelled));
+
+        DaySlotResponse day = slotService.getAdminDay(1L, date);
+
+        assertThat(day.slots()).extracting(DaySlotResponse.Slot::state).containsExactly(
+                DaySlotResponse.SlotState.AVAILABLE, DaySlotResponse.SlotState.BOOKED, DaySlotResponse.SlotState.AVAILABLE);
+        assertThat(day.slots().get(1).booking().patientName()).isEqualTo("Nguyen Van A");
+        assertThat(slotService.getAvailableSlots(1L, date).getAvailableSlots())
+                .containsExactly(LocalTime.of(9, 0), LocalTime.of(10, 0));
     }
 
     @Test

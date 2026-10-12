@@ -308,3 +308,25 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
   .patient-profile__facts, .doctor-profile__facts, .patient-profile-form, .doctor-profile-form { grid-template-columns: 1fr; }
   .dashboard-list li { flex-wrap: wrap; }
 }
+
+.slot-option--booked { background: #eef1f3; border-color: #c5d0d4; color: #7b8794; cursor: not-allowed; text-decoration: line-through; }
+.slot-legend { color: #52606d; font-size: .85rem; margin: .75rem 0 0; }
+.availability-controls { align-items: end; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) auto; margin: 1rem 0; }
+.availability-date { align-items: end; display: flex; flex-wrap: wrap; gap: .5rem; }
+.availability-day { font-size: 1.2rem; margin: 1.5rem 0 .75rem; text-transform: capitalize; }
+.availability-summary { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 1rem; }
+.availability-summary article { background: #073c43; border-radius: .75rem; color: #c9e8e5; display: grid; gap: .25rem; padding: 1rem; }
+.availability-summary strong { color: #fff; font-size: 1.75rem; line-height: 1.1; }
+.availability-list { display: grid; gap: .6rem; list-style: none; margin: 0; padding: 0; }
+.availability-row { align-items: center; background: #fff; border: 1px solid #d5e1e4; border-left-width: .35rem; border-radius: .6rem; display: grid; gap: .75rem; grid-template-columns: 8.5rem minmax(0, 1fr); padding: .75rem 1rem; }
+.availability-row--available { border-left-color: #0a8f6a; }
+.availability-row--booked { background: #fff8e6; border-left-color: #b7791f; }
+.availability-row--past { background: #f4f6f7; border-left-color: #c5d0d4; color: #7b8794; }
+.availability-detail { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem .9rem; min-width: 0; }
+.availability-badge { border-radius: 999px; font-size: .8rem; font-weight: 700; padding: .2rem .65rem; }
+.availability-badge--free { background: #d9f5ee; color: #075b59; }
+.availability-badge--booked { background: #fde8b8; color: #573a0c; }
+.availability-badge--past { background: #e4e9ec; color: #52606d; }
+@media (max-width: 720px) {
+  .availability-controls, .availability-summary, .availability-row { grid-template-columns: 1fr; }
+}

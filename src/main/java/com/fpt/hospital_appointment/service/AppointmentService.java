@@ -4,6 +4,7 @@ import com.fpt.hospital_appointment.dto.request.AppointmentRequest;
 import com.fpt.hospital_appointment.dto.response.AppointmentResponse;
 import com.fpt.hospital_appointment.exception.InvalidRequestException;
 import com.fpt.hospital_appointment.exception.ResourceNotFoundException;
+import com.fpt.hospital_appointment.exception.SlotUnavailableException;
 import com.fpt.hospital_appointment.model.Appointment;
 import com.fpt.hospital_appointment.model.AppointmentStatus;
 import com.fpt.hospital_appointment.model.Doctor;
@@ -35,6 +36,9 @@ public class AppointmentService {
         Doctor doctor = doctorService.findDoctorOrThrow(request.getDoctorId());
         Patient patient = patientService.findPatientOrThrow(patientId);
         slotService.validateSlotAvailability(doctor.getId(), request.getAppointmentDate(), request.getAppointmentTime());
+        if (appointmentRepository.existsByPatientIdAndAppointmentDateAndAppointmentTimeAndStatusNot(patientId, request.getAppointmentDate(), request.getAppointmentTime(), AppointmentStatus.CANCELLED)) {
+            throw new SlotUnavailableException("Bạn đã có một lịch hẹn khác vào đúng giờ này.");
+        }
         Appointment appointment = Appointment.builder().doctor(doctor).patient(patient).appointmentDate(request.getAppointmentDate()).appointmentTime(request.getAppointmentTime()).status(AppointmentStatus.PENDING).reasonForVisit(request.getReasonForVisit()).build();
         Appointment saved = appointmentRepository.save(appointment);
         emailService.sendBookingConfirmation(saved); // fire-and-forget, async
