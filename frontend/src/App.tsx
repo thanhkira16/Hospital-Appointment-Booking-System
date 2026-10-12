@@ -1,21 +1,28 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from './shared/auth/AuthProvider'
 import { Dialog } from './shared/components/Dialog'
 import { AppLayout } from './shared/layout/AppLayout'
 import { FeatureErrorBoundary } from './routes/FeatureErrorBoundary'
 import { RequireAuth } from './routes/RequireAuth'
-import { DashboardPage, RolePlaceholderPage, SignInPage, WelcomePage } from './features/foundation/pages'
+import { DashboardPage, RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
+import { RegisterPage, SignInPage } from './features/auth/pages'
 
 const feature = (node: ReactNode) => <FeatureErrorBoundary>{node}</FeatureErrorBoundary>
 
 function Application() {
   const { sessionExpired, acknowledgeExpiredSession } = useAuth()
+  const navigate = useNavigate()
+  const closeExpiredSession = () => {
+    acknowledgeExpiredSession()
+    navigate('/sign-in', { replace: true })
+  }
   return <>
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={feature(<WelcomePage />)} />
         <Route path="sign-in" element={feature(<SignInPage />)} />
+        <Route path="register" element={feature(<RegisterPage />)} />
         <Route element={<RequireAuth />}>
           <Route path="dashboard" element={feature(<DashboardPage />)} />
           <Route element={<RequireAuth roles={['ADMIN']} />}>
@@ -31,7 +38,7 @@ function Application() {
         <Route path="*" element={feature(<WelcomePage />)} />
       </Route>
     </Routes>
-    <Dialog title="Phiên làm việc đã hết hạn" open={sessionExpired} onClose={acknowledgeExpiredSession}>
+    <Dialog title="Phiên làm việc đã hết hạn" open={sessionExpired} onClose={closeExpiredSession}>
       <p>Thông tin đang nhập đã được lưu trên thiết bị này. Vui lòng đăng nhập lại để tiếp tục.</p>
     </Dialog>
   </>

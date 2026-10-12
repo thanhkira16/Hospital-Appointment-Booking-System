@@ -16,7 +16,10 @@ export function AppLayout() {
           {role === 'DOCTOR' && <NavLink to="/doctor">Lịch làm việc</NavLink>}
           {role === 'PATIENT' && <NavLink to="/patient">Đặt lịch</NavLink>}
           <button className="nav-button" onClick={signOut}>Đăng xuất</button>
-        </> : <NavLink to="/sign-in">Đăng nhập</NavLink>}
+        </> : <>
+          <NavLink to="/sign-in">Đăng nhập</NavLink>
+          <NavLink to="/register">Đăng ký bệnh nhân</NavLink>
+        </>}
       </nav>
     </header>
     {session && <aside className="role-banner" aria-label="Vai trò hiện tại">{labels[role!]}: {session.user.name}</aside>}
