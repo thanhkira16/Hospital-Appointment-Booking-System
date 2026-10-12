@@ -8,6 +8,7 @@ import { RequireAuth } from './routes/RequireAuth'
 import { RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { RegisterPage, SignInPage } from './features/auth/pages'
+import { DoctorDetailPage, DoctorListPage } from './features/doctors/pages'
 
 const feature = (node: ReactNode) => <FeatureErrorBoundary>{node}</FeatureErrorBoundary>
 
@@ -26,6 +27,8 @@ function Application() {
         <Route path="register" element={feature(<RegisterPage />)} />
         <Route element={<RequireAuth />}>
           <Route path="dashboard" element={feature(<DashboardPage />)} />
+          <Route path="doctors" element={feature(<DoctorListPage />)} />
+          <Route path="doctors/:doctorId" element={feature(<DoctorDetailPage />)} />
           <Route element={<RequireAuth roles={['ADMIN']} />}>
             <Route path="admin" element={feature(<RolePlaceholderPage title="Quản trị hệ thống" description="Công cụ quản trị sẽ xuất hiện tại đây." />)} />
           </Route>
