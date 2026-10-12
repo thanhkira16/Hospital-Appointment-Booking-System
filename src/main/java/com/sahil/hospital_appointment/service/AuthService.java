@@ -39,6 +39,10 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
 
+        if (request.getRole() == Role.ADMIN) {
+            throw new InvalidRequestException("Public registration is not available for ADMIN");
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Email is already registered: " + request.getEmail());
         }

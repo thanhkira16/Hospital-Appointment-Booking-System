@@ -19,7 +19,7 @@ Các file trong thư mục này chia UI theo tính năng, dựa trên API hiện
 ## Các điểm backend cần xử lý trước khi hoàn thiện UI
 
 - ✅ `GET /api/patients/me` và `GET /api/doctors/me` đã được thêm vào backend — dùng để lấy `patientId`/`doctorId` sau đăng nhập thay vì suy từ `userId`.
-- Endpoint đăng ký công khai nhận `role`, hiện cho phép gửi `ADMIN`. Backend cần chặn tự đăng ký quyền ADMIN trước khi phát hành UI công khai; form không được cho chọn ADMIN.
+- Endpoint đăng ký công khai nhận `role`; backend từ chối `ADMIN` và UI chỉ mở đăng ký `PATIENT`. Bật đăng ký `DOCTOR` cần chính sách vận hành rõ ràng.
 - Backend chưa có đổi/quên mật khẩu, refresh token, logout server-side, dời cuộc hẹn hoặc API trung tâm thông báo. JWT hết hạn sau 24h; UI xử lý 401 bằng thông báo rõ ràng (xem 00, 01).
 - Xóa hồ sơ bác sĩ/bệnh nhân hiện là xóa thật (không có soft-delete); UI quản trị cần xác nhận rõ trước khi gọi DELETE, và xử lý lỗi 409 nếu bản ghi có ràng buộc khóa ngoại.
 - Tìm kiếm bác sĩ, lịch bác sĩ và slot hiện yêu cầu JWT theo `SecurityConfig`.

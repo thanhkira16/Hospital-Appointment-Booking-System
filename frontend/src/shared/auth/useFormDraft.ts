@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { registerDraftWriter } from './drafts'
+import { readFormDraft, registerDraftWriter } from './drafts'
 
 export function useFormDraft<T>(key: string, value: T) {
   useEffect(() => registerDraftWriter(() => {
@@ -7,10 +7,7 @@ export function useFormDraft<T>(key: string, value: T) {
   }), [key, value])
 
   return {
-    restore: (): T | null => {
-      const saved = localStorage.getItem(`hospital.form-draft.${key}`)
-      return saved ? (JSON.parse(saved) as T) : null
-    },
+    restore: (): T | null => readFormDraft<T>(key),
     clear: () => localStorage.removeItem(`hospital.form-draft.${key}`),
   }
 }
