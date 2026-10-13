@@ -4,7 +4,7 @@ import type { Role } from '../auth/types'
 
 const labels: Record<Role, string> = { ADMIN: 'Quản trị viên', DOCTOR: 'Bác sĩ', PATIENT: 'Bệnh nhân' }
 const destinations: Record<Role, { to: string; label: string }[]> = {
-  ADMIN: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/admin', label: 'Quản trị' }, { to: '/patients', label: 'Bệnh nhân' }],
+  ADMIN: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/admin', label: 'Quản trị' }, { to: '/doctor', label: 'Lịch làm việc' }, { to: '/patients', label: 'Bệnh nhân' }],
   DOCTOR: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/doctor', label: 'Lịch làm việc' }, { to: '/patients', label: 'Bệnh nhân' }],
   PATIENT: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/doctors', label: 'Tìm bác sĩ' }, { to: '/patients/me', label: 'Hồ sơ cá nhân' }],
 }
