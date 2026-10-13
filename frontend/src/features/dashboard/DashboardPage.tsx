@@ -172,22 +172,36 @@ function AppointmentSearchForm({
   initialStatus,
   initialFromDate,
   initialToDate,
+  initialDoctorId,
+  initialPatientId,
   onSearch,
 }: {
   initialStatus: string
   initialFromDate: string
   initialToDate: string
+  initialDoctorId: string
+  initialPatientId: string
   onSearch: (params: URLSearchParams) => void
 }) {
   const [status, setStatus] = useState(initialStatus)
   const [fromDate, setFromDate] = useState(initialFromDate)
   const [toDate, setToDate] = useState(initialToDate)
+  const [doctorId, setDoctorId] = useState(initialDoctorId)
+  const [patientId, setPatientId] = useState(initialPatientId)
+  const [dateError, setDateError] = useState('')
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (fromDate && toDate && fromDate > toDate) {
+      setDateError('Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.')
+      return
+    }
+    setDateError('')
     const next = new URLSearchParams()
     if (status) next.set('status', status)
     if (fromDate) next.set('fromDate', fromDate)
     if (toDate) next.set('toDate', toDate)
+    if (doctorId) next.set('doctorId', doctorId)
+    if (patientId) next.set('patientId', patientId)
     onSearch(next)
   }
   return <form className="appointment-search-form" onSubmit={submit}>
@@ -200,8 +214,11 @@ function AppointmentSearchForm({
         <option value="CANCELLED">Đã hủy</option>
       </select>
     </label>
-    <label className="field"><span>Từ ngày</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
-    <label className="field"><span>Đến ngày</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+    <label className="field"><span>Từ ngày</span><input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} /></label>
+    <label className="field"><span>Đến ngày</span><input type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} /></label>
+    <label className="field"><span>Mã bác sĩ</span><input type="number" min="1" step="1" value={doctorId} onChange={(event) => setDoctorId(event.target.value)} placeholder="Tất cả" /></label>
+    <label className="field"><span>Mã bệnh nhân</span><input type="number" min="1" step="1" value={patientId} onChange={(event) => setPatientId(event.target.value)} placeholder="Tất cả" /></label>
+    {dateError && <p className="form-error" role="alert">{dateError}</p>}
     <button className="button button--primary" type="submit">Tìm cuộc hẹn</button>
   </form>
 }
@@ -215,14 +232,20 @@ function AdminDashboard() {
     queryKey: ['dashboard', 'all-appointments', filterKey],
     queryFn: () => {
       const params = new URLSearchParams({ page: '0', size: '5', sort: 'appointmentDate,desc' })
-      for (const key of ['status', 'fromDate', 'toDate']) {
+      for (const key of ['status', 'fromDate', 'toDate', 'doctorId', 'patientId']) {
         const value = searchParams.get(key)
         if (value) params.set(key, value)
       }
       return apiRequest<PageResponse<Appointment>>(`/api/appointments/search?${params.toString()}`)
     },
   })
-  return <div className="dashboard-grid">
+  return <>
+    <section className="admin-tools" aria-label="Khu vực quản lý">
+      <Link className="admin-tool-card" to="/doctors"><span className="eyebrow">Danh bạ</span><strong>Quản lý bác sĩ</strong><span>Tìm kiếm, xem, sửa hoặc xóa hồ sơ.</span></Link>
+      <Link className="admin-tool-card" to="/patients"><span className="eyebrow">Hồ sơ</span><strong>Quản lý bệnh nhân</strong><span>Xem danh sách và cập nhật hồ sơ theo quyền.</span></Link>
+      <Link className="admin-tool-card" to="/appointments"><span className="eyebrow">Lịch khám</span><strong>Tra cứu cuộc hẹn</strong><span>Mở danh sách phân trang với bộ lọc chi tiết.</span></Link>
+    </section>
+    <div className="dashboard-grid">
     <Widget id="doctors" title="Bác sĩ" loading={doctors.isPending} error={doctors.isError} retry={() => void doctors.refetch()}
       empty={doctors.data?.content.length ? undefined : { title: 'Chưa có hồ sơ bác sĩ', description: 'Danh sách bác sĩ hiện chưa có dữ liệu.', to: '/admin', cta: 'Mở quản trị' }}>
       <p className="widget-total">{doctors.data?.totalElements} hồ sơ</p>
@@ -234,12 +257,22 @@ function AdminDashboard() {
       <ul className="dashboard-list">{patients.data?.content.map((patient) => <li key={patient.id}><div><strong>{patient.fullName}</strong><span>{patient.email}</span></div></li>)}</ul>
     </Widget>
     <Widget id="appointments" title="Tìm kiếm cuộc hẹn" loading={appointments.isPending} error={appointments.isError} retry={() => void appointments.refetch()}
-      controls={<AppointmentSearchForm key={filterKey} initialStatus={searchParams.get('status') ?? ''} initialFromDate={searchParams.get('fromDate') ?? ''} initialToDate={searchParams.get('toDate') ?? ''} onSearch={setSearchParams} />}
+      controls={<AppointmentSearchForm key={filterKey} initialStatus={searchParams.get('status') ?? ''} initialFromDate={searchParams.get('fromDate') ?? ''} initialToDate={searchParams.get('toDate') ?? ''} initialDoctorId={searchParams.get('doctorId') ?? ''} initialPatientId={searchParams.get('patientId') ?? ''} onSearch={setSearchParams} />}
       empty={appointments.data?.content.length ? undefined : { title: 'Chưa có cuộc hẹn', description: 'Các cuộc hẹn sẽ xuất hiện khi được tạo.', to: '/admin', cta: 'Mở quản trị' }}>
       <p className="widget-total">{appointments.data?.totalElements} cuộc hẹn</p>
       <AppointmentList appointments={appointments.data?.content ?? []} role="ADMIN" />
     </Widget>
-  </div>
+    </div>
+  </>
+}
+
+export function AdminManagementPage() {
+  return <section className="dashboard-page admin-page">
+    <p className="eyebrow">Khu vực quản trị</p>
+    <h1>Công cụ quản trị</h1>
+    <p className="muted">Tổng quan hệ thống và truy cập các danh sách quản lý theo phân quyền hiện có.</p>
+    <AdminDashboard />
+  </section>
 }
 
 export function DashboardPage() {
