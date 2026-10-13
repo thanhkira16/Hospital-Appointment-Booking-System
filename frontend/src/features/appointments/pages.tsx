@@ -37,14 +37,17 @@ export function AppointmentListPage() {
   const isDoctor = hasRole(['DOCTOR'])
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Math.max(0, Number.parseInt(searchParams.get('page') ?? '0', 10) || 0)
+  const fromDate = searchParams.get('fromDate') ?? ''
+  const toDate = searchParams.get('toDate') ?? ''
   const filterKey = searchParams.toString()
+  const [dateError, setDateError] = useState('')
   const profile = useQuery({
     queryKey: ['appointment-profile', isDoctor ? 'doctor' : 'patient'],
     queryFn: () => apiRequest<Profile>(isDoctor ? '/api/doctors/me' : '/api/patients/me'),
     enabled: !isAdmin,
   })
   const requestUrl = isAdmin
-    ? `/api/appointments/search?${new URLSearchParams({ page: String(page), size: '10', sort: 'appointmentDate,desc', ...(searchParams.get('status') ? { status: searchParams.get('status')! } : {}), ...(searchParams.get('fromDate') ? { fromDate: searchParams.get('fromDate')! } : {}), ...(searchParams.get('toDate') ? { toDate: searchParams.get('toDate')! } : {}) }).toString()}`
+    ? `/api/appointments/search?${new URLSearchParams({ page: String(page), size: '10', sort: 'appointmentDate,desc', ...(['status', 'fromDate', 'toDate', 'doctorId', 'patientId'].reduce<Record<string, string>>((params, key) => { const value = searchParams.get(key); if (value) params[key] = value; return params }, {})) }).toString()}`
     : profile.data ? `/api/appointments/${isDoctor ? 'doctors' : 'patients'}/${profile.data.id}?page=${page}&size=10&sort=appointmentDate,desc` : ''
   const appointments = useQuery({
     queryKey: ['appointments', requestUrl, filterKey],
@@ -52,22 +55,44 @@ export function AppointmentListPage() {
     enabled: Boolean(requestUrl),
   })
 
-  function updateFilters(updates: Record<string, string>) {
+  function updateFilters(updates: Record<string, string>, resetPage = true) {
     const next = new URLSearchParams(searchParams)
     for (const [key, value] of Object.entries(updates)) {
       if (value) next.set(key, value)
       else next.delete(key)
     }
-    next.delete('page')
+    if (resetPage) next.delete('page')
     setSearchParams(next)
+  }
+
+  function submitAdminFilters(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const nextFrom = (form.elements.namedItem('fromDate') as HTMLInputElement).value
+    const nextTo = (form.elements.namedItem('toDate') as HTMLInputElement).value
+    if (nextFrom && nextTo && nextFrom > nextTo) {
+      setDateError('Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.')
+      return
+    }
+    setDateError('')
+    updateFilters({
+      status: (form.elements.namedItem('status') as HTMLSelectElement).value,
+      fromDate: nextFrom,
+      toDate: nextTo,
+      doctorId: (form.elements.namedItem('doctorId') as HTMLInputElement).value,
+      patientId: (form.elements.namedItem('patientId') as HTMLInputElement).value,
+    })
   }
 
   return <section className="appointment-directory">
     <p className="eyebrow">Lịch hẹn</p><h1>{isAdmin ? 'Tra cứu mọi cuộc hẹn' : 'Cuộc hẹn của tôi'}</h1>
-    {isAdmin && <form className="appointment-filter card" onSubmit={(event) => { event.preventDefault(); updateFilters({ status: (event.currentTarget.elements.namedItem('status') as HTMLSelectElement).value, fromDate: (event.currentTarget.elements.namedItem('fromDate') as HTMLInputElement).value, toDate: (event.currentTarget.elements.namedItem('toDate') as HTMLInputElement).value }) }}>
+    {isAdmin && <form key={filterKey} className="appointment-filter card" onSubmit={submitAdminFilters}>
       <label className="field">Trạng thái<select name="status" defaultValue={searchParams.get('status') ?? ''}><option value="">Tất cả</option>{statusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <label className="field">Từ ngày<input name="fromDate" type="date" defaultValue={searchParams.get('fromDate') ?? ''} /></label>
-      <label className="field">Đến ngày<input name="toDate" type="date" defaultValue={searchParams.get('toDate') ?? ''} /></label>
+      <label className="field">Từ ngày<input name="fromDate" type="date" defaultValue={fromDate} max={toDate || undefined} /></label>
+      <label className="field">Đến ngày<input name="toDate" type="date" defaultValue={toDate} min={fromDate || undefined} /></label>
+      <label className="field">Mã bác sĩ<input name="doctorId" type="number" min="1" step="1" defaultValue={searchParams.get('doctorId') ?? ''} placeholder="Tất cả" /></label>
+      <label className="field">Mã bệnh nhân<input name="patientId" type="number" min="1" step="1" defaultValue={searchParams.get('patientId') ?? ''} placeholder="Tất cả" /></label>
+      {dateError && <p className="form-error" role="alert">{dateError}</p>}
       <div className="dialog-actions"><Button type="submit">Lọc cuộc hẹn</Button><Button type="button" variant="secondary" onClick={() => setSearchParams({})}>Xóa lọc</Button></div>
     </form>}
     {profile.isError ? <StatusPanel kind="error" title="Không tải được hồ sơ tài khoản" description={profile.error.message} onRetry={() => void profile.refetch()} /> : null}
@@ -76,7 +101,7 @@ export function AppointmentListPage() {
     {appointments.data && appointments.data.content.length === 0 ? <StatusPanel kind="empty" title="Không có cuộc hẹn" description="Các cuộc hẹn phù hợp sẽ xuất hiện tại đây." /> : null}
     {appointments.data && appointments.data.content.length > 0 && <>
       <div className="appointment-table-wrap"><table className="appointment-table"><thead><tr><th>Thời gian</th><th>Bác sĩ</th><th>Bệnh nhân</th><th>Trạng thái</th><th><span className="sr-only">Thao tác</span></th></tr></thead><tbody>{appointments.data.content.map((appointment) => <tr key={appointment.id}><td><Link to={appointmentPath(appointment.id, '/appointments')}><strong>{appointmentTime(appointment)}</strong></Link></td><td>{appointment.doctorName}</td><td>{appointment.patientName}</td><td><span className={`appointment-status appointment-status--${appointment.status.toLowerCase()}`}>{statusLabels[appointment.status]}</span></td><td><Link className="button button--secondary" to={appointmentPath(appointment.id, '/appointments')}>Chi tiết</Link></td></tr>)}</tbody></table></div>
-      <Pagination page={appointments.data.pageNumber} totalPages={appointments.data.totalPages} onChange={(nextPage) => updateFilters({ page: String(nextPage) })} />
+      <Pagination page={appointments.data.pageNumber} totalPages={appointments.data.totalPages} onChange={(nextPage) => updateFilters({ page: String(nextPage) }, false)} />
     </>}
   </section>
 }

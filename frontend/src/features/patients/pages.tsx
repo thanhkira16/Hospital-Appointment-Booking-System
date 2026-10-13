@@ -36,7 +36,8 @@ function patientDetailPath(id: number, from: string) {
 }
 
 export function PatientListPage() {
-  const [page, setPage] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const page = Math.max(0, Number.parseInt(searchParams.get('page') ?? '0', 10) || 0)
   const patients = useQuery({
     queryKey: ['patients', page],
     queryFn: () => apiRequest<PageResponse<Patient>>(`/api/patients?page=${page}&size=${pageSize}&sort=id,asc`),
@@ -60,7 +61,7 @@ export function PatientListPage() {
           </tr>)}</tbody>
         </table>
       </div>
-      <Pagination page={patients.data.pageNumber} totalPages={patients.data.totalPages} onChange={setPage} />
+      <Pagination page={patients.data.pageNumber} totalPages={patients.data.totalPages} onChange={(nextPage) => setSearchParams(nextPage ? { page: String(nextPage) } : {})} />
     </>}
   </section>
 }
