@@ -179,6 +179,21 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .slot-option--selected { background: #d9f5ee; border-color: #087e8b; color: #075b59; font-weight: 700; }
 .field-hint { color: #52606d; font-size: .8rem; font-weight: 400; }
 .booking-confirmation { max-width: 40rem; }
+.appointment-filter { align-items: end; display: grid; gap: .85rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1rem 0 1.5rem; }
+.appointment-filter .dialog-actions { align-self: end; margin: 0; }
+.appointment-table-wrap { background: #fff; border: 1px solid #d5e1e4; border-radius: .8rem; overflow-x: auto; }
+.appointment-table { border-collapse: collapse; min-width: 860px; text-align: left; width: 100%; }
+.appointment-table th, .appointment-table td { border-bottom: 1px solid #e5edef; padding: .9rem 1rem; }
+.appointment-table th { background: #f7fbfb; color: #52606d; font-size: .82rem; }
+.appointment-table tr:last-child td { border-bottom: 0; }
+.appointment-table td:first-child a { color: #075b59; text-decoration: none; }
+.appointment-table .button { display: inline-flex; text-decoration: none; white-space: nowrap; }
+.appointment-detail-card { max-width: 52rem; }
+.appointment-detail-card h1 { margin: .25rem 0 0; }
+.appointment-detail-facts { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1.5rem 0; }
+.appointment-detail-facts dt { color: #52606d; font-size: .78rem; }
+.appointment-detail-facts dd { font-weight: 700; line-height: 1.45; margin: .2rem 0 0; overflow-wrap: anywhere; }
+.appointment-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .schedule-doctor-picker { margin: 1.25rem 0; max-width: 34rem; }
 .schedule-form { align-items: end; display: grid; gap: .85rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 1.25rem 0 1.5rem; }
 .schedule-form .directory-heading, .schedule-form .dialog-actions, .schedule-form > p { grid-column: 1 / -1; }
@@ -223,6 +238,9 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
   .managed-schedule-list li { align-items: flex-start; flex-direction: column; }
   .booking-layout { grid-template-columns: 1fr; }
   .booking-review { position: static; }
+  .appointment-filter { grid-template-columns: 1fr; }
+  .appointment-filter .dialog-actions { align-self: auto; }
+  .appointment-detail-facts { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {
