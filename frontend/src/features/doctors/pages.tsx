@@ -243,6 +243,8 @@ export function DoctorDetailPage() {
 
   useEffect(() => {
     if (!doctor.data) return
+    // Form state must be initialized from the asynchronously loaded profile.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormValues({
       specialization: doctor.data.specialization,
       qualification: doctor.data.qualification,
