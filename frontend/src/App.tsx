@@ -9,6 +9,7 @@ import { RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { RegisterPage, SignInPage } from './features/auth/pages'
 import { DoctorDetailPage, DoctorListPage } from './features/doctors/pages'
+import { PatientDetailPage, PatientListPage } from './features/patients/pages'
 
 const feature = (node: ReactNode) => <FeatureErrorBoundary>{node}</FeatureErrorBoundary>
 
@@ -29,6 +30,11 @@ function Application() {
           <Route path="dashboard" element={feature(<DashboardPage />)} />
           <Route path="doctors" element={feature(<DoctorListPage />)} />
           <Route path="doctors/:doctorId" element={feature(<DoctorDetailPage />)} />
+          <Route path="patients/me" element={feature(<PatientDetailPage />)} />
+          <Route element={<RequireAuth roles={['ADMIN', 'DOCTOR']} />}>
+            <Route path="patients" element={feature(<PatientListPage />)} />
+          </Route>
+          <Route path="patients/:patientId" element={feature(<PatientDetailPage />)} />
           <Route element={<RequireAuth roles={['ADMIN']} />}>
             <Route path="admin" element={feature(<RolePlaceholderPage title="Quản trị hệ thống" description="Công cụ quản trị sẽ xuất hiện tại đây." />)} />
           </Route>
