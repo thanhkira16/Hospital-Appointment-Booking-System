@@ -76,6 +76,11 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .shortcut-card strong { color: #075b59; }
 .shortcut-card span { color: #52606d; line-height: 1.4; }
 .dashboard-grid { align-items: start; display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-tools { display: grid; gap: .75rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1.25rem 0; }
+.admin-tool-card { background: #fff; border: 1px solid #d5e1e4; border-radius: .8rem; color: inherit; display: grid; gap: .35rem; min-width: 0; padding: 1rem; text-decoration: none; }
+.admin-tool-card:hover, .admin-tool-card:focus-visible { border-color: #087e8b; box-shadow: 0 0 0 2px #ccebe8; }
+.admin-tool-card strong { color: #075b59; font-size: 1.05rem; }
+.admin-tool-card > span:last-child { color: #52606d; font-size: .9rem; line-height: 1.45; }
 .dashboard-widget { background: #fff; border: 1px solid #d5e1e4; border-radius: .8rem; min-width: 0; padding: 1.25rem; scroll-margin-top: 1rem; }
 .widget-heading h2 { font-size: 1.15rem; margin: 0 0 1rem; }
 .dashboard-widget .status-panel { margin-top: 0; padding: 1rem; }
@@ -179,8 +184,8 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .slot-option--selected { background: #d9f5ee; border-color: #087e8b; color: #075b59; font-weight: 700; }
 .field-hint { color: #52606d; font-size: .8rem; font-weight: 400; }
 .booking-confirmation { max-width: 40rem; }
-.appointment-filter { align-items: end; display: grid; gap: .85rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1rem 0 1.5rem; }
-.appointment-filter .dialog-actions { align-self: end; margin: 0; }
+.appointment-filter { align-items: end; display: grid; gap: .85rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); margin: 1rem 0 1.5rem; }
+.appointment-filter .dialog-actions { align-self: end; grid-column: 1 / -1; margin: 0; }
 .appointment-table-wrap { background: #fff; border: 1px solid #d5e1e4; border-radius: .8rem; overflow-x: auto; }
 .appointment-table { border-collapse: collapse; min-width: 860px; text-align: left; width: 100%; }
 .appointment-table th, .appointment-table td { border-bottom: 1px solid #e5edef; padding: .9rem 1rem; }
@@ -238,6 +243,7 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
   .workspace-main { padding-top: 1rem; }
   .shortcut-grid { grid-template-columns: 1fr; }
   .dashboard-grid { grid-template-columns: 1fr; }
+  .admin-tools { grid-template-columns: 1fr; }
   .appointment-search-form { grid-template-columns: 1fr; }
   .doctor-filter { grid-template-columns: 1fr; }
   .doctor-filter__actions { grid-column: auto; }

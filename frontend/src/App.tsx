@@ -6,7 +6,7 @@ import { AppLayout } from './shared/layout/AppLayout'
 import { FeatureErrorBoundary } from './routes/FeatureErrorBoundary'
 import { RequireAuth } from './routes/RequireAuth'
 import { RolePlaceholderPage, WelcomePage } from './features/foundation/pages'
-import { DashboardPage } from './features/dashboard/DashboardPage'
+import { AdminManagementPage, DashboardPage } from './features/dashboard/DashboardPage'
 import { RegisterPage, SignInPage } from './features/auth/pages'
 import { DoctorDetailPage, DoctorListPage } from './features/doctors/pages'
 import { PatientDetailPage, PatientListPage } from './features/patients/pages'
@@ -44,7 +44,7 @@ function Application() {
           </Route>
           <Route path="patients/:patientId" element={feature(<PatientDetailPage />)} />
           <Route element={<RequireAuth roles={['ADMIN']} />}>
-            <Route path="admin" element={feature(<RolePlaceholderPage title="Quản trị hệ thống" description="Công cụ quản trị sẽ xuất hiện tại đây." />)} />
+            <Route path="admin" element={feature(<AdminManagementPage />)} />
           </Route>
           <Route element={<RequireAuth roles={['ADMIN', 'DOCTOR']} />}>
             <Route path="doctor" element={feature(<ScheduleManagementPage />)} />
