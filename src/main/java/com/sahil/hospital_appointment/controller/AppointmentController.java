@@ -55,12 +55,21 @@ public class AppointmentController {
                 .body(ApiResponse.success("Appointment booked successfully", booked));
     }
 
-    // ADMIN sees any appointment; a PATIENT/DOCTOR can only view one
-    // that actually involves them
+    /**
+     * Retrieves a single appointment. Administrators may view any appointment;
+     * patients and doctors may view only appointments in which they participate.
+     *
+     * @param id the appointment identifier
+     * @return the appointment details in a successful response
+     * @apiNote Returns 403 when the caller is not associated with the appointment.
+     *          Returns 404 when an administrator requests an appointment that
+     *          does not exist.
+     */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @appointmentService.isPatientOwner(#id, authentication.name) " +
             "or @appointmentService.isDoctorOwner(#id, authentication.name)")
     public ResponseEntity<ApiResponse<AppointmentResponse>> getAppointmentById(@PathVariable Long id) {
+        // Load the persisted appointment and map it to the public response DTO.
         AppointmentResponse appointment = appointmentService.getAppointmentById(id);
         return ResponseEntity.ok(ApiResponse.success("Appointment fetched successfully", appointment));
     }
