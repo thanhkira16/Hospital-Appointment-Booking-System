@@ -185,6 +185,7 @@ export function DoctorDetailPage() {
   const returnTo = rawFrom?.startsWith('/doctors?') || rawFrom === '/doctors' ? rawFrom : '/doctors'
   const isAdmin = hasRole(['ADMIN'])
   const isDoctor = hasRole(['DOCTOR'])
+  const isPatient = hasRole(['PATIENT'])
   const [formValues, setFormValues] = useState<DoctorProfileValues>({ specialization: '', qualification: '', yearsOfExperience: '', phoneNumber: '', consultationFee: '' })
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formMessage, setFormMessage] = useState('')
@@ -284,6 +285,7 @@ export function DoctorDetailPage() {
           <div><dt>Liên hệ</dt><dd>{doctor.data.phoneNumber || doctor.data.email}</dd></div>
         </dl>
         <a className="button button--primary" href="#schedule">Xem lịch làm việc</a>
+        {isPatient && <Link className="button button--secondary doctor-booking-link" to={`/doctors/${id}/book`}>Đặt lịch khám</Link>}
         {canEdit && <form className="doctor-profile-form" onSubmit={submitProfile}>
           <div className="directory-heading"><div><p className="eyebrow">Quản lý hồ sơ</p><h2>Cập nhật thông tin</h2></div></div>
           {formMessage && <p className={updateDoctor.isError ? 'form-error' : 'form-success'} role="status">{formMessage}</p>}

@@ -11,6 +11,7 @@ import { RegisterPage, SignInPage } from './features/auth/pages'
 import { DoctorDetailPage, DoctorListPage } from './features/doctors/pages'
 import { PatientDetailPage, PatientListPage } from './features/patients/pages'
 import { ScheduleManagementPage } from './features/schedules/pages'
+import { BookingPage } from './features/appointments/BookingPage'
 
 const feature = (node: ReactNode) => <FeatureErrorBoundary>{node}</FeatureErrorBoundary>
 
@@ -31,6 +32,9 @@ function Application() {
           <Route path="dashboard" element={feature(<DashboardPage />)} />
           <Route path="doctors" element={feature(<DoctorListPage />)} />
           <Route path="doctors/:doctorId" element={feature(<DoctorDetailPage />)} />
+          <Route element={<RequireAuth roles={['PATIENT']} />}>
+            <Route path="doctors/:doctorId/book" element={feature(<BookingPage />)} />
+          </Route>
           <Route path="patients/me" element={feature(<PatientDetailPage />)} />
           <Route element={<RequireAuth roles={['ADMIN', 'DOCTOR']} />}>
             <Route path="patients" element={feature(<PatientListPage />)} />
