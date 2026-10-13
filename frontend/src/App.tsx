@@ -10,6 +10,7 @@ import { DashboardPage } from './features/dashboard/DashboardPage'
 import { RegisterPage, SignInPage } from './features/auth/pages'
 import { DoctorDetailPage, DoctorListPage } from './features/doctors/pages'
 import { PatientDetailPage, PatientListPage } from './features/patients/pages'
+import { ScheduleManagementPage } from './features/schedules/pages'
 
 const feature = (node: ReactNode) => <FeatureErrorBoundary>{node}</FeatureErrorBoundary>
 
@@ -38,8 +39,8 @@ function Application() {
           <Route element={<RequireAuth roles={['ADMIN']} />}>
             <Route path="admin" element={feature(<RolePlaceholderPage title="Quản trị hệ thống" description="Công cụ quản trị sẽ xuất hiện tại đây." />)} />
           </Route>
-          <Route element={<RequireAuth roles={['DOCTOR']} />}>
-            <Route path="doctor" element={feature(<RolePlaceholderPage title="Lịch làm việc" description="Lịch làm việc của bác sĩ đang được tải." />)} />
+          <Route element={<RequireAuth roles={['ADMIN', 'DOCTOR']} />}>
+            <Route path="doctor" element={feature(<ScheduleManagementPage />)} />
           </Route>
           <Route element={<RequireAuth roles={['PATIENT']} />}>
             <Route path="patient" element={feature(<RolePlaceholderPage title="Đặt lịch khám" description="Tìm bác sĩ và chọn khung giờ phù hợp." />)} />
