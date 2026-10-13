@@ -194,6 +194,19 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .appointment-detail-facts dt { color: #52606d; font-size: .78rem; }
 .appointment-detail-facts dd { font-weight: 700; line-height: 1.45; margin: .2rem 0 0; overflow-wrap: anywhere; }
 .appointment-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.medical-record-panel { border-top: 1px solid #d5e1e4; margin-top: 1.5rem; padding-top: 1rem; }
+.medical-record-panel .directory-heading { align-items: center; margin: 0 0 1rem; }
+.medical-record-panel h2 { font-size: 1.2rem; margin: .25rem 0 0; }
+.medical-record-content .status-panel { margin-top: .75rem; }
+.medical-record-card { background: #f7fbfb; border: 1px solid #d5e1e4; border-radius: .65rem; padding: 1rem; }
+.medical-record-facts, .medical-record-confirmation { display: grid; gap: 1rem; margin: 0; }
+.medical-record-facts div, .medical-record-confirmation div { min-width: 0; }
+.medical-record-facts dt, .medical-record-confirmation dt { color: #52606d; font-size: .8rem; font-weight: 650; }
+.medical-record-facts dd, .medical-record-confirmation dd { line-height: 1.55; margin: .25rem 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.medical-record-form { border-top: 1px solid #e5edef; margin-top: 1rem; padding-top: 1rem; }
+.medical-record-form .muted { margin: 0; }
+.medical-record-form .field textarea { min-height: 5rem; }
+.medical-record-confirmation { background: #f7fbfb; border-radius: .5rem; margin: 1rem 0; padding: 1rem; }
 .schedule-doctor-picker { margin: 1.25rem 0; max-width: 34rem; }
 .schedule-form { align-items: end; display: grid; gap: .85rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 1.25rem 0 1.5rem; }
 .schedule-form .directory-heading, .schedule-form .dialog-actions, .schedule-form > p { grid-column: 1 / -1; }
@@ -241,6 +254,7 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
   .appointment-filter { grid-template-columns: 1fr; }
   .appointment-filter .dialog-actions { align-self: auto; }
   .appointment-detail-facts { grid-template-columns: 1fr; }
+  .medical-record-panel .directory-heading { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 420px) {
