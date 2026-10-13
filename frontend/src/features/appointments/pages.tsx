@@ -8,6 +8,7 @@ import { Button } from '../../shared/components/Button'
 import { Dialog } from '../../shared/components/Dialog'
 import { Pagination } from '../../shared/components/Pagination'
 import { StatusPanel } from '../../shared/components/StatusPanel'
+import { MedicalRecordPanel } from './MedicalRecordPanel'
 
 interface Appointment {
   id: number
@@ -84,7 +85,7 @@ export function AppointmentDetailPage() {
   const { appointmentId } = useParams()
   const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const { hasRole } = useAuth()
+  const { hasRole, session } = useAuth()
   const isAdmin = hasRole(['ADMIN'])
   const isDoctor = hasRole(['DOCTOR'])
   const returnTo = searchParams.get('from') === '/appointments' ? '/appointments' : '/dashboard'
@@ -106,7 +107,7 @@ export function AppointmentDetailPage() {
     {!Number.isSafeInteger(id) || id <= 0 ? <StatusPanel kind="error" title="Mã cuộc hẹn không hợp lệ" description="Hãy quay lại danh sách cuộc hẹn." /> : null}
     {appointment.isPending ? <StatusPanel kind="loading" title="Đang tải chi tiết cuộc hẹn" description="Thông tin cuộc hẹn đang được tải." /> : null}
     {appointment.isError ? <StatusPanel kind="error" title="Không tải được cuộc hẹn" description={appointment.error.message} onRetry={() => void appointment.refetch()} /> : null}
-    {data && <article className="appointment-detail-card card"><div className="directory-heading"><div><p className="eyebrow">Chi tiết cuộc hẹn #{data.id}</p><h1>{appointmentTime(data)}</h1></div><span className={`appointment-status appointment-status--${data.status.toLowerCase()}`}>{statusLabels[data.status]}</span></div><dl className="appointment-detail-facts"><div><dt>Bác sĩ</dt><dd>{data.doctorName}</dd></div><div><dt>Bệnh nhân</dt><dd>{data.patientName}</dd></div><div><dt>Chuyên khoa</dt><dd>{data.doctorSpecialization || 'Đang cập nhật'}</dd></div><div><dt>Lý do khám</dt><dd>{data.reasonForVisit || 'Không cung cấp'}</dd></div>{data.cancellationReason && <div><dt>Lý do hủy</dt><dd>{data.cancellationReason}</dd></div>}</dl>{errorMessage && <p className="form-error" role="alert">{errorMessage}</p>}<div className="appointment-actions">{canDoctorAct && data.status === 'PENDING' && <Button onClick={() => changeStatus.mutate({ action: 'confirm' })} disabled={changeStatus.isPending}>Xác nhận lịch</Button>}{canDoctorAct && data.status === 'CONFIRMED' && <Button onClick={() => changeStatus.mutate({ action: 'complete' })} disabled={changeStatus.isPending}>Đánh dấu hoàn tất</Button>}{canCancel && <Button variant="danger" onClick={() => setCancelOpen(true)} disabled={changeStatus.isPending}>Hủy cuộc hẹn</Button>}</div></article>}
+    {data && <article className="appointment-detail-card card"><div className="directory-heading"><div><p className="eyebrow">Chi tiết cuộc hẹn #{data.id}</p><h1>{appointmentTime(data)}</h1></div><span className={`appointment-status appointment-status--${data.status.toLowerCase()}`}>{statusLabels[data.status]}</span></div><dl className="appointment-detail-facts"><div><dt>Bác sĩ</dt><dd>{data.doctorName}</dd></div><div><dt>Bệnh nhân</dt><dd>{data.patientName}</dd></div><div><dt>Chuyên khoa</dt><dd>{data.doctorSpecialization || 'Đang cập nhật'}</dd></div><div><dt>Lý do khám</dt><dd>{data.reasonForVisit || 'Không cung cấp'}</dd></div>{data.cancellationReason && <div><dt>Lý do hủy</dt><dd>{data.cancellationReason}</dd></div>}</dl>{errorMessage && <p className="form-error" role="alert">{errorMessage}</p>}<div className="appointment-actions">{canDoctorAct && data.status === 'PENDING' && <Button onClick={() => changeStatus.mutate({ action: 'confirm' })} disabled={changeStatus.isPending}>Xác nhận lịch</Button>}{canDoctorAct && data.status === 'CONFIRMED' && <Button onClick={() => changeStatus.mutate({ action: 'complete' })} disabled={changeStatus.isPending}>Đánh dấu hoàn tất</Button>}{canCancel && <Button variant="danger" onClick={() => setCancelOpen(true)} disabled={changeStatus.isPending}>Hủy cuộc hẹn</Button>}</div>{data.status === 'COMPLETED' && <MedicalRecordPanel appointmentId={data.id} accountId={session?.user.id ?? 0} canWrite={isAdmin || isDoctor} />}</article>}
     <Dialog title="Hủy cuộc hẹn" open={cancelOpen} onClose={() => setCancelOpen(false)}><p>Vui lòng cho biết lý do hủy. Lý do này sẽ được gửi trong thông báo cuộc hẹn.</p><label className="field">Lý do hủy<textarea value={cancelReason} maxLength={500} rows={4} onChange={(event) => setCancelReason(event.target.value)} required /><span className="field-hint">Còn {500 - cancelReason.length} ký tự</span></label><div className="dialog-actions"><Button type="button" variant="secondary" onClick={() => setCancelOpen(false)}>Đóng</Button><Button type="button" variant="danger" disabled={!cancelReason.trim() || cancelReason.length > 500 || changeStatus.isPending} onClick={() => changeStatus.mutate({ action: 'cancel', reason: cancelReason.trim() })}>Xác nhận hủy</Button></div></Dialog>
   </section>
 }
