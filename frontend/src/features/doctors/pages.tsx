@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
-import type { PageResponse } from '../../shared/api/types'
+import { ApiError, type FieldErrors, type PageResponse } from '../../shared/api/types'
+import { useAuth } from '../../shared/auth/AuthProvider'
 import { Button } from '../../shared/components/Button'
+import { Dialog } from '../../shared/components/Dialog'
 import { Pagination } from '../../shared/components/Pagination'
 import { StatusPanel } from '../../shared/components/StatusPanel'
 
@@ -26,6 +28,14 @@ interface DoctorSchedule {
   endTime: string
   slotDurationMinutes: number
   active: boolean
+}
+
+interface DoctorProfileValues {
+  specialization: string
+  qualification: string
+  yearsOfExperience: string
+  phoneNumber: string
+  consultationFee: string
 }
 
 const pageSize = 10
@@ -167,13 +177,29 @@ export function DoctorListPage() {
 export function DoctorDetailPage() {
   const { doctorId } = useParams()
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { hasRole } = useAuth()
   const id = Number(doctorId)
   const rawFrom = searchParams.get('from')
   const returnTo = rawFrom?.startsWith('/doctors?') || rawFrom === '/doctors' ? rawFrom : '/doctors'
+  const isAdmin = hasRole(['ADMIN'])
+  const isDoctor = hasRole(['DOCTOR'])
+  const [formValues, setFormValues] = useState<DoctorProfileValues>({ specialization: '', qualification: '', yearsOfExperience: '', phoneNumber: '', consultationFee: '' })
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [formMessage, setFormMessage] = useState('')
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteMessage, setDeleteMessage] = useState('')
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const doctor = useQuery({
     queryKey: ['doctor', id],
     queryFn: () => apiRequest<Doctor>(`/api/doctors/${id}`),
     enabled: Number.isSafeInteger(id) && id > 0,
+  })
+  const currentDoctor = useQuery({
+    queryKey: ['doctor', 'me'],
+    queryFn: () => apiRequest<Doctor>('/api/doctors/me'),
+    enabled: isDoctor,
   })
   const schedules = useQuery({
     queryKey: ['doctor', id, 'schedules'],
@@ -182,6 +208,61 @@ export function DoctorDetailPage() {
   })
   const activeSchedules = schedules.data?.filter((schedule) => schedule.active)
     .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek)) ?? []
+  const canEdit = isAdmin || (isDoctor && currentDoctor.data?.id === id)
+  const updateDoctor = useMutation({
+    mutationFn: () => apiRequest<Doctor>(`/api/doctors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        specialization: formValues.specialization.trim(),
+        qualification: formValues.qualification.trim(),
+        yearsOfExperience: Number(formValues.yearsOfExperience),
+        phoneNumber: formValues.phoneNumber.trim(),
+        consultationFee: Number(formValues.consultationFee),
+      }),
+    }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['doctor', id], updated)
+      void queryClient.invalidateQueries({ queryKey: ['doctors'] })
+      setFormMessage('Đã lưu thay đổi hồ sơ bác sĩ.')
+      setFieldErrors({})
+    },
+    onError: (error) => {
+      setFormMessage(error instanceof ApiError ? error.message : 'Không thể lưu hồ sơ bác sĩ.')
+      setFieldErrors(error instanceof ApiError ? error.fieldErrors ?? {} : {})
+    },
+  })
+  const deleteDoctor = useMutation({
+    mutationFn: () => apiRequest<unknown>(`/api/doctors/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['doctors'] })
+      setDeleteOpen(false)
+      navigate(returnTo, { replace: true })
+    },
+    onError: (error) => setDeleteMessage(error instanceof ApiError ? error.message : 'Không thể xóa hồ sơ bác sĩ.'),
+  })
+
+  useEffect(() => {
+    if (!doctor.data) return
+    setFormValues({
+      specialization: doctor.data.specialization,
+      qualification: doctor.data.qualification,
+      yearsOfExperience: String(doctor.data.yearsOfExperience),
+      phoneNumber: doctor.data.phoneNumber,
+      consultationFee: String(doctor.data.consultationFee),
+    })
+  }, [doctor.data])
+
+  function updateFormValue(name: keyof DoctorProfileValues, value: string) {
+    setFormValues((current) => ({ ...current, [name]: value }))
+    setFieldErrors((current) => ({ ...current, [name]: '' }))
+    setFormMessage('')
+  }
+
+  function submitProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setFormMessage('')
+    updateDoctor.mutate()
+  }
 
   return <section className="doctor-detail">
     <Link className="back-link" to={returnTo}>← Quay lại danh sách bác sĩ</Link>
@@ -201,6 +282,36 @@ export function DoctorDetailPage() {
           <div><dt>Liên hệ</dt><dd>{doctor.data.phoneNumber || doctor.data.email}</dd></div>
         </dl>
         <a className="button button--primary" href="#schedule">Xem lịch làm việc</a>
+        {canEdit && <form className="doctor-profile-form" onSubmit={submitProfile}>
+          <div className="directory-heading"><div><p className="eyebrow">Quản lý hồ sơ</p><h2>Cập nhật thông tin</h2></div></div>
+          {formMessage && <p className={updateDoctor.isError ? 'form-error' : 'form-success'} role="status">{formMessage}</p>}
+          <label className="field">Chuyên khoa
+            <input value={formValues.specialization} onChange={(event) => updateFormValue('specialization', event.target.value)} aria-invalid={Boolean(fieldErrors.specialization)} required />
+            {fieldErrors.specialization && <small className="field__error">{fieldErrors.specialization}</small>}
+          </label>
+          <label className="field">Trình độ chuyên môn
+            <input value={formValues.qualification} onChange={(event) => updateFormValue('qualification', event.target.value)} aria-invalid={Boolean(fieldErrors.qualification)} required />
+            {fieldErrors.qualification && <small className="field__error">{fieldErrors.qualification}</small>}
+          </label>
+          <label className="field">Kinh nghiệm (năm)
+            <input type="number" min="0" step="1" value={formValues.yearsOfExperience} onChange={(event) => updateFormValue('yearsOfExperience', event.target.value)} aria-invalid={Boolean(fieldErrors.yearsOfExperience)} required />
+            {fieldErrors.yearsOfExperience && <small className="field__error">{fieldErrors.yearsOfExperience}</small>}
+          </label>
+          <label className="field">Số điện thoại
+            <input type="tel" value={formValues.phoneNumber} onChange={(event) => updateFormValue('phoneNumber', event.target.value)} aria-invalid={Boolean(fieldErrors.phoneNumber)} required />
+            {fieldErrors.phoneNumber && <small className="field__error">{fieldErrors.phoneNumber}</small>}
+          </label>
+          <label className="field">Phí khám (₫)
+            <input type="number" min="0.01" step="1000" value={formValues.consultationFee} onChange={(event) => updateFormValue('consultationFee', event.target.value)} aria-invalid={Boolean(fieldErrors.consultationFee)} required />
+            {fieldErrors.consultationFee && <small className="field__error">{fieldErrors.consultationFee}</small>}
+          </label>
+          <Button type="submit" disabled={updateDoctor.isPending}>{updateDoctor.isPending ? 'Đang lưu...' : 'Lưu hồ sơ'}</Button>
+        </form>}
+        {isAdmin && <div className="doctor-danger-zone">
+          <h2>Xóa hồ sơ bác sĩ</h2>
+          <p>Thao tác này xóa dữ liệu vĩnh viễn và không thể hoàn tác.</p>
+          <Button type="button" variant="danger" onClick={() => { setDeleteMessage(''); setDeleteConfirmation(''); setDeleteOpen(true) }}>Xóa hồ sơ</Button>
+        </div>}
       </article>
 
       <section className="schedule-section" id="schedule" aria-labelledby="schedule-title">
@@ -217,5 +328,16 @@ export function DoctorDetailPage() {
         </ul>}
       </section>
     </>}
+    <Dialog title="Xác nhận xóa hồ sơ" open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+      <p>Kiểm tra đúng tên bác sĩ trước khi xóa: <strong>{doctor.data?.fullName}</strong>.</p>
+      {deleteMessage && <p className="form-error" role="alert">{deleteMessage}</p>}
+      <label className="field">Nhập lại tên bác sĩ
+        <input value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} autoComplete="off" />
+      </label>
+      <div className="dialog-actions">
+        <Button type="button" variant="secondary" onClick={() => setDeleteOpen(false)}>Hủy</Button>
+        <Button type="button" variant="danger" disabled={deleteDoctor.isPending || deleteConfirmation !== doctor.data?.fullName} onClick={() => deleteDoctor.mutate()}>{deleteDoctor.isPending ? 'Đang xóa...' : 'Xác nhận xóa'}</Button>
+      </div>
+    </Dialog>
   </section>
 }
