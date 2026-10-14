@@ -1,6 +1,6 @@
 import { ApiError, type ApiResponse, type FieldErrors } from './types'
 
-const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8081').replace(/\/$/, '')
+const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8082').replace(/\/$/, '')
 let getToken = () => localStorage.getItem('hospital.auth.token')
 let onSessionExpired: () => void = () => undefined
 

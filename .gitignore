@@ -1,5 +1,8 @@
 HELP.md
 target/
+.jdk*/
+*.log
+frontend/vite-run.log*
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

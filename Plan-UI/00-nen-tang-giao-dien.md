@@ -14,7 +14,7 @@ Thiết lập nền tảng để các tính năng dùng chung API, xác thực, 
 
 ## Hợp đồng kỹ thuật
 
-- Base URL lấy từ biến môi trường, mặc định local `http://localhost:8081`.
+- Base URL lấy từ biến môi trường, mặc định local `http://localhost:8082`.
 - HTTP client tự thêm Bearer token; khi nhận 401 (bao gồm JWT hết hạn), hiển thị dialog "Phiên làm việc đã hết hạn" thay vì redirect im lặng; nếu user đang điền form thì auto-save vào localStorage trước khi xóa phiên.
 - Đọc dữ liệu từ `response.data`; UI không phụ thuộc vào toàn bộ envelope.
 - Đưa bộ lọc và phân trang lên URL để refresh/chia sẻ trang vẫn giữ trạng thái.

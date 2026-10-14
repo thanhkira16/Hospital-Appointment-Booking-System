@@ -10,21 +10,17 @@ import com.fpt.hospital_appointment.model.Doctor;
 import com.fpt.hospital_appointment.model.Patient;
 import com.fpt.hospital_appointment.repository.AppointmentRepository;
 import com.fpt.hospital_appointment.service.mapper.AppointmentMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
- import com.fpt.hospital_appointment.dto.PageResponse;
- import com.fpt.hospital_appointment.service.specification.AppointmentSpecification;
- import org.springframework.data.domain.Page;
- import org.springframework.data.domain.Pageable;
- import java.time.LocalDate;
+import com.fpt.hospital_appointment.dto.PageResponse;
+import com.fpt.hospital_appointment.service.specification.AppointmentSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class AppointmentService {
-
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
     private final DoctorService doctorService;
@@ -36,22 +32,10 @@ public class AppointmentService {
     public AppointmentResponse bookAppointment(Long patientId, AppointmentRequest request) {
         Doctor doctor = doctorService.findDoctorOrThrow(request.getDoctorId());
         Patient patient = patientService.findPatientOrThrow(patientId);
-
         slotService.validateSlotAvailability(doctor.getId(), request.getAppointmentDate(), request.getAppointmentTime());
-
-        Appointment appointment = Appointment.builder()
-                .doctor(doctor)
-                .patient(patient)
-                .appointmentDate(request.getAppointmentDate())
-                .appointmentTime(request.getAppointmentTime())
-                .status(AppointmentStatus.PENDING)
-                .reasonForVisit(request.getReasonForVisit())
-                .build();
-
+        Appointment appointment = Appointment.builder().doctor(doctor).patient(patient).appointmentDate(request.getAppointmentDate()).appointmentTime(request.getAppointmentTime()).status(AppointmentStatus.PENDING).reasonForVisit(request.getReasonForVisit()).build();
         Appointment saved = appointmentRepository.save(appointment);
-
         emailService.sendBookingConfirmation(saved); // fire-and-forget, async
-
         return appointmentMapper.toResponse(saved);
     }
 
@@ -62,43 +46,33 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
-    public com.fpt.hospital_appointment.dto.PageResponse<AppointmentResponse> getAppointmentsByPatient(
-            Long patientId, org.springframework.data.domain.Pageable pageable) {
+    public com.fpt.hospital_appointment.dto.PageResponse<AppointmentResponse> getAppointmentsByPatient(Long patientId, org.springframework.data.domain.Pageable pageable) {
         patientService.findPatientOrThrow(patientId);
-        org.springframework.data.domain.Page<AppointmentResponse> page =
-                appointmentRepository.findByPatientId(patientId, pageable).map(appointmentMapper::toResponse);
+        org.springframework.data.domain.Page<AppointmentResponse> page = appointmentRepository.findByPatientId(patientId, pageable).map(appointmentMapper::toResponse);
         return com.fpt.hospital_appointment.dto.PageResponse.from(page);
     }
 
     @Transactional(readOnly = true)
-    public com.fpt.hospital_appointment.dto.PageResponse<AppointmentResponse> getAppointmentsByDoctor(
-            Long doctorId, org.springframework.data.domain.Pageable pageable) {
+    public com.fpt.hospital_appointment.dto.PageResponse<AppointmentResponse> getAppointmentsByDoctor(Long doctorId, org.springframework.data.domain.Pageable pageable) {
         doctorService.findDoctorOrThrow(doctorId);
-        org.springframework.data.domain.Page<AppointmentResponse> page =
-                appointmentRepository.findByDoctorId(doctorId, pageable).map(appointmentMapper::toResponse);
+        org.springframework.data.domain.Page<AppointmentResponse> page = appointmentRepository.findByDoctorId(doctorId, pageable).map(appointmentMapper::toResponse);
         return com.fpt.hospital_appointment.dto.PageResponse.from(page);
     }
 
     // ---------- Helpers ----------
-
     @Transactional(readOnly = true)
     public Appointment findAppointmentOrThrow(Long id) {
-        return appointmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Appointment", id));
+        return appointmentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Appointment", id));
     }
 
     @Transactional(readOnly = true)
     public boolean isPatientOwner(Long appointmentId, String currentUserEmail) {
-        return appointmentRepository.findById(appointmentId)
-                .map(appointment -> appointment.getPatient().getUser().getEmail().equals(currentUserEmail))
-                .orElse(false);
+        return appointmentRepository.findById(appointmentId).map(appointment -> appointment.getPatient().getUser().getEmail().equals(currentUserEmail)).orElse(false);
     }
 
     @Transactional(readOnly = true)
     public boolean isDoctorOwner(Long appointmentId, String currentUserEmail) {
-        return appointmentRepository.findById(appointmentId)
-                .map(appointment -> appointment.getDoctor().getUser().getEmail().equals(currentUserEmail))
-                .orElse(false);
+        return appointmentRepository.findById(appointmentId).map(appointment -> appointment.getDoctor().getUser().getEmail().equals(currentUserEmail)).orElse(false);
     }
 
     @Transactional(readOnly = true)
@@ -107,17 +81,13 @@ public class AppointmentService {
     }
 
     // ---------- Status transitions ----------
-
     @Transactional
     public AppointmentResponse confirmAppointment(Long appointmentId) {
         Appointment appointment = findAppointmentOrThrow(appointmentId);
         validateStatusTransition(appointment.getStatus(), AppointmentStatus.CONFIRMED);
-
         appointment.setStatus(AppointmentStatus.CONFIRMED);
         Appointment updated = appointmentRepository.save(appointment);
-
         emailService.sendConfirmationNotice(updated);
-
         return appointmentMapper.toResponse(updated);
     }
 
@@ -125,12 +95,9 @@ public class AppointmentService {
     public AppointmentResponse completeAppointment(Long appointmentId) {
         Appointment appointment = findAppointmentOrThrow(appointmentId);
         validateStatusTransition(appointment.getStatus(), AppointmentStatus.COMPLETED);
-
         appointment.setStatus(AppointmentStatus.COMPLETED);
         Appointment updated = appointmentRepository.save(appointment);
-
         emailService.sendCompletionNotice(updated);
-
         return appointmentMapper.toResponse(updated);
     }
 
@@ -138,13 +105,10 @@ public class AppointmentService {
     public AppointmentResponse cancelAppointment(Long appointmentId, String cancellationReason) {
         Appointment appointment = findAppointmentOrThrow(appointmentId);
         validateStatusTransition(appointment.getStatus(), AppointmentStatus.CANCELLED);
-
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment.setCancellationReason(cancellationReason);
         Appointment updated = appointmentRepository.save(appointment);
-
         emailService.sendCancellationNotice(updated);
-
         return appointmentMapper.toResponse(updated);
     }
 
@@ -155,19 +119,24 @@ public class AppointmentService {
             case CANCELLED -> current == AppointmentStatus.PENDING || current == AppointmentStatus.CONFIRMED;
             case PENDING -> false;
         };
-
         if (!isValid) {
-            throw new InvalidRequestException(
-                    "Cannot change appointment status from " + current + " to " + target);
+            throw new InvalidRequestException("Cannot change appointment status from " + current + " to " + target);
         }
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<AppointmentResponse> searchAppointments(
-            AppointmentStatus status, LocalDate fromDate, LocalDate toDate,
-            Long doctorId, Long patientId, Pageable pageable) {
+    public PageResponse<AppointmentResponse> searchAppointments(AppointmentStatus status, LocalDate fromDate, LocalDate toDate, Long doctorId, Long patientId, Pageable pageable) {
         var spec = AppointmentSpecification.buildSearchSpecification(status, fromDate, toDate, doctorId, patientId);
         Page<AppointmentResponse> page = appointmentRepository.findAll(spec, pageable).map(appointmentMapper::toResponse);
         return PageResponse.from(page);
+    }
+
+    public AppointmentService(final AppointmentRepository appointmentRepository, final AppointmentMapper appointmentMapper, final DoctorService doctorService, final PatientService patientService, final SlotService slotService, final EmailService emailService) {
+        this.appointmentRepository = appointmentRepository;
+        this.appointmentMapper = appointmentMapper;
+        this.doctorService = doctorService;
+        this.patientService = patientService;
+        this.slotService = slotService;
+        this.emailService = emailService;
     }
 }

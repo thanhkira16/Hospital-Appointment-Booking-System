@@ -10,14 +10,11 @@ import com.fpt.hospital_appointment.model.AppointmentStatus;
 import com.fpt.hospital_appointment.model.MedicalRecord;
 import com.fpt.hospital_appointment.repository.MedicalRecordRepository;
 import com.fpt.hospital_appointment.service.mapper.MedicalRecordMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class MedicalRecordService {
-
     private final MedicalRecordRepository medicalRecordRepository;
     private final MedicalRecordMapper medicalRecordMapper;
     private final AppointmentService appointmentService;
@@ -25,34 +22,20 @@ public class MedicalRecordService {
     @Transactional
     public MedicalRecordResponse createMedicalRecord(MedicalRecordRequest request) {
         Appointment appointment = appointmentService.findAppointmentOrThrow(request.getAppointmentId());
-
         if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
-            throw new InvalidRequestException(
-                    "Cannot create a medical record for an appointment that is not COMPLETED (current status: "
-                            + appointment.getStatus() + ")");
+            throw new InvalidRequestException("Cannot create a medical record for an appointment that is not COMPLETED (current status: " + appointment.getStatus() + ")");
         }
-
         if (medicalRecordRepository.existsByAppointmentId(appointment.getId())) {
-            throw new DuplicateResourceException(
-                    "A medical record already exists for appointment id: " + appointment.getId());
+            throw new DuplicateResourceException("A medical record already exists for appointment id: " + appointment.getId());
         }
-
-        MedicalRecord record = MedicalRecord.builder()
-                .appointment(appointment)
-                .diagnosis(request.getDiagnosis())
-                .prescription(request.getPrescription())
-                .doctorNotes(request.getDoctorNotes())
-                .build();
-
+        MedicalRecord record = MedicalRecord.builder().appointment(appointment).diagnosis(request.getDiagnosis()).prescription(request.getPrescription()).doctorNotes(request.getDoctorNotes()).build();
         MedicalRecord saved = medicalRecordRepository.save(record);
         return medicalRecordMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public MedicalRecordResponse getMedicalRecordByAppointmentId(Long appointmentId) {
-        MedicalRecord record = medicalRecordRepository.findByAppointmentId(appointmentId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "No medical record found for appointment id: " + appointmentId));
+        MedicalRecord record = medicalRecordRepository.findByAppointmentId(appointmentId).orElseThrow(() -> new ResourceNotFoundException("No medical record found for appointment id: " + appointmentId));
         return medicalRecordMapper.toResponse(record);
     }
 
@@ -63,11 +46,9 @@ public class MedicalRecordService {
     }
 
     // ---------- Helpers ----------
-
     @Transactional(readOnly = true)
     public MedicalRecord findMedicalRecordOrThrow(Long id) {
-        return medicalRecordRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", id));
+        return medicalRecordRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", id));
     }
 
     // Used by @PreAuthorize: is the currently logged-in user the DOCTOR
@@ -82,5 +63,11 @@ public class MedicalRecordService {
     @Transactional(readOnly = true)
     public boolean isRecordPatient(Long appointmentId, String currentUserEmail) {
         return appointmentService.isPatientOwner(appointmentId, currentUserEmail);
+    }
+
+    public MedicalRecordService(final MedicalRecordRepository medicalRecordRepository, final MedicalRecordMapper medicalRecordMapper, final AppointmentService appointmentService) {
+        this.medicalRecordRepository = medicalRecordRepository;
+        this.medicalRecordMapper = medicalRecordMapper;
+        this.appointmentService = appointmentService;
     }
 }

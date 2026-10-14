@@ -25,6 +25,18 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SlotServiceTest {
 
+    @Test
+    void getAvailableSlots_shouldStopBeforeMidnightAndRemoveDuplicates() {
+        LocalDate date = nextMonday();
+        DoctorSchedule schedule = buildSchedule(LocalTime.of(23, 0), LocalTime.of(23, 59), 30);
+        when(scheduleRepository.findByDoctorIdAndDayOfWeekAndActiveTrue(1L, DayOfWeek.MONDAY))
+                .thenReturn(List.of(schedule, schedule));
+        when(appointmentRepository.findByDoctorIdAndAppointmentDate(1L, date)).thenReturn(List.of());
+
+        assertThat(slotService.getAvailableSlots(1L, date).getAvailableSlots())
+                .containsExactly(LocalTime.of(23, 0));
+    }
+
     @Mock private DoctorScheduleRepository scheduleRepository;
     @Mock private AppointmentRepository appointmentRepository;
     @Mock private DoctorService doctorService;

@@ -6,10 +6,8 @@ import com.fpt.hospital_appointment.exception.ResourceNotFoundException;
 import com.fpt.hospital_appointment.model.Patient;
 import com.fpt.hospital_appointment.repository.PatientRepository;
 import com.fpt.hospital_appointment.service.mapper.PatientMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 /**
@@ -18,17 +16,13 @@ import java.util.List;
  * @PreAuthorize, this Service just does data operations.
  */
 @Service
-@RequiredArgsConstructor
 public class PatientService {
-
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;
 
     @Transactional(readOnly = true)
-    public com.fpt.hospital_appointment.dto.PageResponse<PatientResponse> getAllPatients(
-            org.springframework.data.domain.Pageable pageable) {
-        org.springframework.data.domain.Page<PatientResponse> page =
-                patientRepository.findAll(pageable).map(patientMapper::toResponse);
+    public com.fpt.hospital_appointment.dto.PageResponse<PatientResponse> getAllPatients(org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<PatientResponse> page = patientRepository.findAll(pageable).map(patientMapper::toResponse);
         return com.fpt.hospital_appointment.dto.PageResponse.from(page);
     }
 
@@ -41,13 +35,11 @@ public class PatientService {
     @Transactional
     public PatientResponse updatePatientProfile(Long id, PatientProfileRequest request) {
         Patient patient = findPatientOrThrow(id);
-
         patient.setDateOfBirth(request.getDateOfBirth());
         patient.setGender(request.getGender());
         patient.setPhoneNumber(request.getPhoneNumber());
         patient.setAddress(request.getAddress());
         patient.setMedicalHistory(request.getMedicalHistory());
-
         Patient updated = patientRepository.save(patient);
         return patientMapper.toResponse(updated);
     }
@@ -62,14 +54,12 @@ public class PatientService {
     // need the raw entity, not the response DTO
     @Transactional(readOnly = true)
     public Patient findPatientOrThrow(Long id) {
-        return patientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", id));
+        return patientRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Patient", id));
     }
 
     @Transactional(readOnly = true)
     public PatientResponse getPatientByEmail(String email) {
-        Patient patient = patientRepository.findByUserEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for current user"));
+        Patient patient = patientRepository.findByUserEmail(email).orElseThrow(() -> new ResourceNotFoundException("Patient profile not found for current user"));
         return patientMapper.toResponse(patient);
     }
 
@@ -77,8 +67,11 @@ public class PatientService {
     // record belong to the currently logged-in user?"
     @Transactional(readOnly = true)
     public boolean isOwner(Long patientId, String currentUserEmail) {
-        return patientRepository.findById(patientId)
-                .map(patient -> patient.getUser().getEmail().equals(currentUserEmail))
-                .orElse(false);
+        return patientRepository.findById(patientId).map(patient -> patient.getUser().getEmail().equals(currentUserEmail)).orElse(false);
+    }
+
+    public PatientService(final PatientRepository patientRepository, final PatientMapper patientMapper) {
+        this.patientRepository = patientRepository;
+        this.patientMapper = patientMapper;
     }
 }
