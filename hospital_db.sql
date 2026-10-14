@@ -10,8 +10,8 @@ START TRANSACTION;
 SET @demo_password = '$2a$10$AJuqlXVv4dTs5OcfQmIAi.sVJyUBSeehmwr5kxf0KM7SoSNm4gcSC';
 
 INSERT INTO users (full_name, email, password, role, enabled, created_at)
-SELECT 'System Administrator', 'admin@hospital.test', @demo_password, 'ADMIN', b'1', NOW()
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@hospital.test');
+SELECT 'System Administrator', 'thanhtch.22git@vku.udn.vn', @demo_password, 'ADMIN', b'1', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'thanhtch.22git@vku.udn.vn');
 
 INSERT INTO users (full_name, email, password, role, enabled, created_at)
 SELECT 'Nguyen Minh Anh', 'minh.anh.doctor@hospital.test', @demo_password, 'DOCTOR', b'1', NOW()
