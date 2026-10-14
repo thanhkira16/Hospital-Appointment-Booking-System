@@ -212,6 +212,17 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
 .medical-record-form .muted { margin: 0; }
 .medical-record-form .field textarea { min-height: 5rem; }
 .medical-record-confirmation { background: #f7fbfb; border-radius: .5rem; margin: 1rem 0; padding: 1rem; }
+.admin-page > .muted { max-width: 50rem; }
+.admin-metric-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1.5rem 0; }
+.admin-metric { background: #073c43; border-radius: .75rem; color: #fff; display: grid; gap: .25rem; padding: 1.25rem; }
+.admin-metric span, .admin-metric small { color: #c9e8e5; }
+.admin-metric strong { font-size: 2rem; line-height: 1.1; }
+.admin-action-list { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-action { display: flex; flex-direction: column; justify-content: space-between; min-height: 12rem; }
+.admin-action h2 { font-size: 1.2rem; margin: 0 0 .5rem; }
+.admin-action p { color: #52606d; line-height: 1.55; margin: 0 0 1.25rem; }
+.admin-action .button { align-self: flex-start; text-decoration: none; }
+.admin-notice { background: #fff8e6; border-left: .3rem solid #b7791f; color: #573a0c; line-height: 1.55; margin-top: 1.25rem; padding: 1rem; }
 .schedule-doctor-picker { margin: 1.25rem 0; max-width: 34rem; }
 .schedule-form { align-items: end; display: grid; gap: .85rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 1.25rem 0 1.5rem; }
 .schedule-form .directory-heading, .schedule-form .dialog-actions, .schedule-form > p { grid-column: 1 / -1; }
@@ -261,6 +272,7 @@ form { display: grid; gap: 1rem; margin-top: 1.5rem; }
   .appointment-filter .dialog-actions { align-self: auto; }
   .appointment-detail-facts { grid-template-columns: 1fr; }
   .medical-record-panel .directory-heading { align-items: flex-start; flex-direction: column; }
+  .admin-metric-grid, .admin-action-list { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {
