@@ -16,7 +16,8 @@ function money(value: number) {
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
 function timeLabel(value: string) {
@@ -61,11 +62,11 @@ export function BookingPage() {
 
   if (!Number.isSafeInteger(doctorId) || doctorId <= 0) return <StatusPanel kind="error" title="Đường dẫn bác sĩ không hợp lệ" description="Hãy quay lại danh sách bác sĩ và thử lại." />
   if (booking.data) return <section className="booking-page">
-    <StatusPanel kind="success" title="Đặt lịch thành công" description="Email xác nhận đã được gửi đến địa chỉ email của bạn." />
+    <StatusPanel kind="success" title="Đặt lịch thành công" description="Cuộc hẹn đã được lưu và đang chờ bác sĩ xác nhận. Bạn có thể theo dõi trong danh sách cuộc hẹn." />
     <article className="booking-confirmation card">
       <p className="eyebrow">Mã cuộc hẹn</p><h1>#{booking.data.id}</h1>
       <dl className="booking-summary"><div><dt>Bác sĩ</dt><dd>{booking.data.doctorName}</dd></div><div><dt>Thời gian</dt><dd>{booking.data.appointmentDate} · {timeLabel(booking.data.appointmentTime)}</dd></div><div><dt>Trạng thái</dt><dd>Chờ xác nhận</dd></div></dl>
-      <Link className="button button--primary" to="/dashboard">Mở dashboard</Link>
+      <Link className="button button--primary" to="/appointments">Xem cuộc hẹn của tôi</Link>
     </article>
   </section>
 
@@ -81,16 +82,16 @@ export function BookingPage() {
           <label className="field">Ngày khám
             <input type="date" min={today()} value={date} onChange={(event) => changeDate(event.target.value)} required />
           </label>
-          {slots.isPending ? <StatusPanel kind="loading" title="Đang tải slot trống" description="Đang kiểm tra lịch đã đặt." /> : null}
-          {slots.isError ? <StatusPanel kind="error" title="Không tải được slot" description={slots.error.message} onRetry={() => void slots.refetch()} /> : null}
-          {slots.data && slots.data.availableSlots.length === 0 ? <StatusPanel kind="empty" title="Không còn slot trống" description="Hãy chọn ngày khác để tìm lịch phù hợp." /> : null}
+          {slots.isPending ? <StatusPanel kind="loading" title="Đang tải giờ khám còn trống" description="Đang kiểm tra lịch đã đặt." /> : null}
+          {slots.isError ? <StatusPanel kind="error" title="Không tải được giờ khám" description={slots.error.message} onRetry={() => void slots.refetch()} /> : null}
+          {slots.data && slots.data.availableSlots.length === 0 ? <StatusPanel kind="empty" title="Không còn giờ khám trống" description="Hãy chọn ngày khác để tìm lịch phù hợp." /> : null}
           {slots.data && slots.data.availableSlots.length > 0 && <fieldset className="slot-picker"><legend>Giờ khám</legend><div className="slot-grid">{slots.data.availableSlots.map((slot) => <label className={`slot-option${selectedSlot === timeLabel(slot) ? ' slot-option--selected' : ''}`} key={slot}><input type="radio" name="appointment-slot" value={timeLabel(slot)} checked={selectedSlot === timeLabel(slot)} onChange={(event) => setSelectedSlot(event.target.value)} /><span>{timeLabel(slot)}</span></label>)}</div></fieldset>}
           <label className="field">Lý do khám <span className="field-hint">Không bắt buộc, tối đa 500 ký tự</span>
             <textarea value={reason} maxLength={500} rows={4} onChange={(event) => setReason(event.target.value)} />
           </label>
         </div>
         <aside className="booking-review card"><p className="eyebrow">Xem lại</p><h2>Xác nhận lịch khám</h2><dl className="booking-summary"><div><dt>Bệnh nhân</dt><dd>{patient.data.fullName}</dd></div><div><dt>Ngày</dt><dd>{date}</dd></div><div><dt>Giờ</dt><dd>{selectedSlot ? timeLabel(selectedSlot) : 'Chưa chọn'}</dd></div><div><dt>Phí khám</dt><dd>{money(doctor.data.consultationFee)}</dd></div></dl>
-          {booking.isError && <p className="form-error" role="alert">{booking.error instanceof ApiError && booking.error.status === 409 ? 'Slot này vừa được đặt. Danh sách slot sẽ được tải lại.' : booking.error.message}</p>}
+          {booking.isError && <p className="form-error" role="alert">{booking.error instanceof ApiError && booking.error.status === 409 ? 'Khung giờ này vừa được đặt. Danh sách giờ khám sẽ được tải lại.' : booking.error.message}</p>}
           <Button type="button" disabled={!selectedSlot || booking.isPending} onClick={() => booking.mutate()}>{booking.isPending ? 'Đang gửi...' : 'Xác nhận đặt lịch'}</Button>
         </aside>
       </div>

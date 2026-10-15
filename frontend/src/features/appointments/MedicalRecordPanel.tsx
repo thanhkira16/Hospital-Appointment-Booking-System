@@ -91,7 +91,7 @@ export function MedicalRecordPanel({ appointmentId, accountId, canWrite }: Medic
       {hasRecord && <article className="medical-record-card" aria-label={`Bệnh án cuộc hẹn ${appointmentId}`}>
         <dl className="medical-record-facts">
           <div><dt>Chẩn đoán</dt><dd>{record.data.diagnosis}</dd></div>
-          <div><dt>Toa thuốc</dt><dd>{record.data.prescription?.trim() || 'Không có thông tin'}</dd></div>
+          <div><dt>Đơn thuốc</dt><dd>{record.data.prescription?.trim() || 'Không có thông tin'}</dd></div>
           <div><dt>Ghi chú của bác sĩ</dt><dd>{record.data.doctorNotes?.trim() || 'Không có thông tin'}</dd></div>
           <div><dt>Ngày lập</dt><dd>{new Date(record.data.createdAt).toLocaleString('vi-VN')}</dd></div>
         </dl>
@@ -102,7 +102,7 @@ export function MedicalRecordPanel({ appointmentId, accountId, canWrite }: Medic
         <label className="field" htmlFor={`diagnosis-${appointmentId}`}>Chẩn đoán
           <textarea id={`diagnosis-${appointmentId}`} value={draft.diagnosis} required rows={3} onChange={(event) => setDraft({ ...draft, diagnosis: event.target.value })} />
         </label>
-        <label className="field" htmlFor={`prescription-${appointmentId}`}>Toa thuốc
+        <label className="field" htmlFor={`prescription-${appointmentId}`}>Đơn thuốc
           <textarea id={`prescription-${appointmentId}`} value={draft.prescription} rows={4} onChange={(event) => setDraft({ ...draft, prescription: event.target.value })} />
         </label>
         <label className="field" htmlFor={`doctor-notes-${appointmentId}`}>Ghi chú của bác sĩ
@@ -117,7 +117,7 @@ export function MedicalRecordPanel({ appointmentId, accountId, canWrite }: Medic
       <p>Bệnh án sẽ được lưu vĩnh viễn cho cuộc hẹn #{appointmentId}. Vui lòng kiểm tra thông tin trước khi xác nhận.</p>
       <dl className="medical-record-confirmation">
         <div><dt>Chẩn đoán</dt><dd>{draft.diagnosis || '—'}</dd></div>
-        <div><dt>Toa thuốc</dt><dd>{draft.prescription || 'Không có thông tin'}</dd></div>
+        <div><dt>Đơn thuốc</dt><dd>{draft.prescription || 'Không có thông tin'}</dd></div>
         <div><dt>Ghi chú của bác sĩ</dt><dd>{draft.doctorNotes || 'Không có thông tin'}</dd></div>
       </dl>
       {writeError && <p className="form-error" role="alert">{writeError}</p>}

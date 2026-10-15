@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { compareSchedules } from '../../shared/scheduleOrder'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
@@ -39,7 +40,6 @@ interface DoctorProfileValues {
 }
 
 const pageSize = 10
-const dayOrder = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 const dayNames: Record<string, string> = {
   MONDAY: 'Thứ Hai', TUESDAY: 'Thứ Ba', WEDNESDAY: 'Thứ Tư', THURSDAY: 'Thứ Năm',
   FRIDAY: 'Thứ Sáu', SATURDAY: 'Thứ Bảy', SUNDAY: 'Chủ Nhật',
@@ -180,9 +180,10 @@ export function DoctorDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { hasRole } = useAuth()
-  const id = Number(doctorId)
+  const isOwnProfile = doctorId === 'me'
+  const requestedId = Number(doctorId)
   const rawFrom = searchParams.get('from')
-  const returnTo = rawFrom?.startsWith('/doctors?') || rawFrom === '/doctors' ? rawFrom : '/doctors'
+  const returnTo = isOwnProfile ? '/dashboard' : rawFrom?.startsWith('/doctors?') || rawFrom === '/doctors' ? rawFrom : '/doctors'
   const isAdmin = hasRole(['ADMIN'])
   const isDoctor = hasRole(['DOCTOR'])
   const isPatient = hasRole(['PATIENT'])
@@ -193,10 +194,11 @@ export function DoctorDetailPage() {
   const [deleteMessage, setDeleteMessage] = useState('')
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const doctor = useQuery({
-    queryKey: ['doctor', id],
-    queryFn: () => apiRequest<Doctor>(`/api/doctors/${id}`),
-    enabled: Number.isSafeInteger(id) && id > 0,
+    queryKey: isOwnProfile ? ['doctor', 'me'] : ['doctor', requestedId],
+    queryFn: () => apiRequest<Doctor>(isOwnProfile ? '/api/doctors/me' : `/api/doctors/${requestedId}`),
+    enabled: isOwnProfile || (Number.isSafeInteger(requestedId) && requestedId > 0),
   })
+  const id = doctor.data?.id ?? requestedId
   const currentDoctor = useQuery({
     queryKey: ['doctor', 'me'],
     queryFn: () => apiRequest<Doctor>('/api/doctors/me'),
@@ -208,7 +210,7 @@ export function DoctorDetailPage() {
     enabled: doctor.isSuccess,
   })
   const activeSchedules = schedules.data?.filter((schedule) => schedule.active)
-    .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek)) ?? []
+    .sort(compareSchedules) ?? []
   const canEdit = isAdmin || (isDoctor && currentDoctor.data?.id === id)
   const updateDoctor = useMutation({
     mutationFn: () => apiRequest<Doctor>(`/api/doctors/${id}`, {
@@ -223,6 +225,8 @@ export function DoctorDetailPage() {
     }),
     onSuccess: (updated) => {
       queryClient.setQueryData(['doctor', id], updated)
+      if (isDoctor) queryClient.setQueryData(['doctor', 'me'], updated)
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       void queryClient.invalidateQueries({ queryKey: ['doctors'] })
       setFormMessage('Đã lưu thay đổi hồ sơ bác sĩ.')
       setFieldErrors({})
@@ -268,9 +272,9 @@ export function DoctorDetailPage() {
   }
 
   return <section className="doctor-detail">
-    <Link className="back-link" to={returnTo}>← Quay lại danh sách bác sĩ</Link>
-    {!Number.isSafeInteger(id) || id <= 0 ? <StatusPanel kind="error" title="Đường dẫn bác sĩ không hợp lệ" description="Hãy quay lại danh sách và chọn một hồ sơ bác sĩ." /> : null}
-    {doctor.isPending && doctorId && Number.isSafeInteger(id) && id > 0 ? <StatusPanel kind="loading" title="Đang tải hồ sơ bác sĩ" description="Thông tin bác sĩ đang được tải." /> : null}
+    <Link className="back-link" to={returnTo}>{isOwnProfile ? '← Quay lại tổng quan' : '← Quay lại danh sách bác sĩ'}</Link>
+    {!isOwnProfile && (!Number.isSafeInteger(id) || id <= 0) ? <StatusPanel kind="error" title="Đường dẫn bác sĩ không hợp lệ" description="Hãy quay lại danh sách và chọn một hồ sơ bác sĩ." /> : null}
+    {doctor.isPending && (isOwnProfile || (Number.isSafeInteger(id) && id > 0)) ? <StatusPanel kind="loading" title="Đang tải hồ sơ bác sĩ" description="Thông tin bác sĩ đang được tải." /> : null}
     {doctor.isError ? <StatusPanel kind="error" title="Không tải được hồ sơ bác sĩ" description={doctor.error.message} onRetry={() => void doctor.refetch()} /> : null}
     {doctor.data && <>
       <article className="doctor-profile card">
