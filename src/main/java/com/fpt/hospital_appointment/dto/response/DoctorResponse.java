@@ -9,6 +9,7 @@ public class DoctorResponse {
     private Integer yearsOfExperience;
     private String phoneNumber;
     private Double consultationFee;
+    private boolean mustChangePassword;
 
 
     public static class DoctorResponseBuilder {
@@ -20,6 +21,7 @@ public class DoctorResponse {
         private Integer yearsOfExperience;
         private String phoneNumber;
         private Double consultationFee;
+        private boolean mustChangePassword;
 
         DoctorResponseBuilder() {
         }
@@ -88,13 +90,21 @@ public class DoctorResponse {
             return this;
         }
 
+        /**
+         * @return {@code this}.
+         */
+        public DoctorResponse.DoctorResponseBuilder mustChangePassword(final boolean mustChangePassword) {
+            this.mustChangePassword = mustChangePassword;
+            return this;
+        }
+
         public DoctorResponse build() {
-            return new DoctorResponse(this.id, this.fullName, this.email, this.specialization, this.qualification, this.yearsOfExperience, this.phoneNumber, this.consultationFee);
+            return new DoctorResponse(this.id, this.fullName, this.email, this.specialization, this.qualification, this.yearsOfExperience, this.phoneNumber, this.consultationFee, this.mustChangePassword);
         }
 
         @Override
         public String toString() {
-            return "DoctorResponse.DoctorResponseBuilder(id=" + this.id + ", fullName=" + this.fullName + ", email=" + this.email + ", specialization=" + this.specialization + ", qualification=" + this.qualification + ", yearsOfExperience=" + this.yearsOfExperience + ", phoneNumber=" + this.phoneNumber + ", consultationFee=" + this.consultationFee + ")";
+            return "DoctorResponse.DoctorResponseBuilder(id=" + this.id + ", fullName=" + this.fullName + ", email=" + this.email + ", specialization=" + this.specialization + ", qualification=" + this.qualification + ", yearsOfExperience=" + this.yearsOfExperience + ", phoneNumber=" + this.phoneNumber + ", consultationFee=" + this.consultationFee + ", mustChangePassword=" + this.mustChangePassword + ")";
         }
     }
 
@@ -134,6 +144,10 @@ public class DoctorResponse {
         return this.consultationFee;
     }
 
+    public boolean isMustChangePassword() {
+        return this.mustChangePassword;
+    }
+
     public void setId(final Long id) {
         this.id = id;
     }
@@ -166,10 +180,14 @@ public class DoctorResponse {
         this.consultationFee = consultationFee;
     }
 
+    public void setMustChangePassword(final boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
     public DoctorResponse() {
     }
 
-    public DoctorResponse(final Long id, final String fullName, final String email, final String specialization, final String qualification, final Integer yearsOfExperience, final String phoneNumber, final Double consultationFee) {
+    public DoctorResponse(final Long id, final String fullName, final String email, final String specialization, final String qualification, final Integer yearsOfExperience, final String phoneNumber, final Double consultationFee, final boolean mustChangePassword) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -178,5 +196,6 @@ public class DoctorResponse {
         this.yearsOfExperience = yearsOfExperience;
         this.phoneNumber = phoneNumber;
         this.consultationFee = consultationFee;
+        this.mustChangePassword = mustChangePassword;
     }
 }

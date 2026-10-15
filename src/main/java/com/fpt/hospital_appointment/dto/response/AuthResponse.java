@@ -9,6 +9,7 @@ public class AuthResponse {
     private Role role;
     private String token;
     private String tokenType;
+    private boolean mustChangePassword;
 
 
     public static class AuthResponseBuilder {
@@ -18,6 +19,7 @@ public class AuthResponse {
         private Role role;
         private String token;
         private String tokenType;
+        private boolean mustChangePassword;
 
         AuthResponseBuilder() {
         }
@@ -70,13 +72,21 @@ public class AuthResponse {
             return this;
         }
 
+        /**
+         * @return {@code this}.
+         */
+        public AuthResponse.AuthResponseBuilder mustChangePassword(final boolean mustChangePassword) {
+            this.mustChangePassword = mustChangePassword;
+            return this;
+        }
+
         public AuthResponse build() {
-            return new AuthResponse(this.userId, this.fullName, this.email, this.role, this.token, this.tokenType);
+            return new AuthResponse(this.userId, this.fullName, this.email, this.role, this.token, this.tokenType, this.mustChangePassword);
         }
 
         @Override
         public String toString() {
-            return "AuthResponse.AuthResponseBuilder(userId=" + this.userId + ", fullName=" + this.fullName + ", email=" + this.email + ", role=" + this.role + ", token=" + this.token + ", tokenType=" + this.tokenType + ")";
+            return "AuthResponse.AuthResponseBuilder(userId=" + this.userId + ", fullName=" + this.fullName + ", email=" + this.email + ", role=" + this.role + ", token=" + this.token + ", tokenType=" + this.tokenType + ", mustChangePassword=" + this.mustChangePassword + ")";
         }
     }
 
@@ -108,6 +118,10 @@ public class AuthResponse {
         return this.tokenType;
     }
 
+    public boolean isMustChangePassword() {
+        return this.mustChangePassword;
+    }
+
     public void setUserId(final Long userId) {
         this.userId = userId;
     }
@@ -132,15 +146,20 @@ public class AuthResponse {
         this.tokenType = tokenType;
     }
 
+    public void setMustChangePassword(final boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
     public AuthResponse() {
     }
 
-    public AuthResponse(final Long userId, final String fullName, final String email, final Role role, final String token, final String tokenType) {
+    public AuthResponse(final Long userId, final String fullName, final String email, final Role role, final String token, final String tokenType, final boolean mustChangePassword) {
         this.userId = userId;
         this.fullName = fullName;
         this.email = email;
         this.role = role;
         this.token = token;
         this.tokenType = tokenType;
+        this.mustChangePassword = mustChangePassword;
     }
 }

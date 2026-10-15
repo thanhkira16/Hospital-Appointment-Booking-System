@@ -1,6 +1,7 @@
 package com.fpt.hospital_appointment.controller;
 
 import com.fpt.hospital_appointment.dto.ApiResponse;
+import com.fpt.hospital_appointment.dto.request.AdminCreateDoctorRequest;
 import com.fpt.hospital_appointment.dto.request.DoctorProfileRequest;
 import com.fpt.hospital_appointment.dto.response.DoctorResponse;
 import com.fpt.hospital_appointment.service.DoctorService;
@@ -23,6 +24,15 @@ public class DoctorController {
     public ResponseEntity<ApiResponse<PageResponse<DoctorResponse>>> getAllDoctors(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
         var doctors = doctorService.getAllDoctors(pageable);
         return ResponseEntity.ok(ApiResponse.success("Doctors fetched successfully", doctors));
+    }
+
+    // Admin onboarding: creates both the login account and the doctor
+    // profile, setting a temporary password the admin chooses.
+    @PostMapping
+    @PreAuthorize("hasRole(\'ADMIN\')")
+    public ResponseEntity<ApiResponse<DoctorResponse>> createDoctorAccount(@Valid @RequestBody AdminCreateDoctorRequest request) {
+        DoctorResponse created = doctorService.createDoctorAccount(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Doctor account created successfully", created));
     }
 
     @GetMapping("/me")

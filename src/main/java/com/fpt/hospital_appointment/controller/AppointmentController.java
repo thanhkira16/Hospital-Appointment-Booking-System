@@ -68,8 +68,9 @@ public class AppointmentController {
 
     /**
      * Retrieves a paginated list of appointments for a specified patient.
-     * Patients may view only their own appointment history, while administrators
-     * can view any patient's appointments.
+     * Patients may view only their own appointment history; administrators
+     * can view any patient's appointments; doctors who have treated the
+     * patient at least once can view the patient's appointment history.
      *
      * @param patientId the patient identifier whose appointments are retrieved
      * @param pageable pagination and sorting parameters (defaults to 10 per page, sorted by appointmentDate)
@@ -78,7 +79,7 @@ public class AppointmentController {
      *          and 404 when an administrator requests appointments for a non-existent patient.
      */
     @GetMapping("/patients/{patientId}")
-    @PreAuthorize("hasRole(\'ADMIN\') or @appointmentService.isPatientSelf(#patientId, authentication.name)")
+    @PreAuthorize("hasRole(\'ADMIN\') or @appointmentService.isPatientSelf(#patientId, authentication.name) " + "or @appointmentService.isDoctorTreatingPatient(#patientId, authentication.name)")
     public ResponseEntity<ApiResponse<com.fpt.hospital_appointment.dto.PageResponse<AppointmentResponse>>> getAppointmentsByPatient(@PathVariable Long patientId, @org.springframework.data.web.PageableDefault(size = 10, sort = "appointmentDate") org.springframework.data.domain.Pageable pageable) {
         // Verify patient existence, query matching appointments with pagination, and map them to response DTOs.
         var appointments = appointmentService.getAppointmentsByPatient(patientId, pageable);

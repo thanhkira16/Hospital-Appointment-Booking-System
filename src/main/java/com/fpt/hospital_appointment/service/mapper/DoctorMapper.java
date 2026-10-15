@@ -17,6 +17,7 @@ public class DoctorMapper {
                 .yearsOfExperience(doctor.getYearsOfExperience())
                 .phoneNumber(doctor.getPhoneNumber())
                 .consultationFee(doctor.getConsultationFee())
+                .mustChangePassword(doctor.getUser().isMustChangePassword())
                 .build();
     }
 }

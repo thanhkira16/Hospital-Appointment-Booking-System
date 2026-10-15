@@ -8,6 +8,7 @@ import { Button } from '../../shared/components/Button'
 import { Dialog } from '../../shared/components/Dialog'
 import { Pagination } from '../../shared/components/Pagination'
 import { StatusPanel } from '../../shared/components/StatusPanel'
+import { MedicalRecordPanel } from '../appointments/MedicalRecordPanel'
 
 interface Patient {
   id: number
@@ -27,6 +28,15 @@ interface PatientProfileValues {
   address: string
   medicalHistory: string
 }
+
+interface PatientAppointment {
+  id: number
+  appointmentDate: string
+  appointmentTime: string
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
+}
+
+const appointmentStatusLabels: Record<PatientAppointment['status'], string> = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', COMPLETED: 'Đã hoàn thành', CANCELLED: 'Đã hủy' }
 
 const pageSize = 10
 const genderLabels: Record<string, string> = { MALE: 'Nam', FEMALE: 'Nữ', OTHER: 'Khác', Male: 'Nam', Female: 'Nữ', Other: 'Khác' }
@@ -66,14 +76,36 @@ export function PatientListPage() {
   </section>
 }
 
+function PatientAppointmentHistory({ patientId, accountId }: { patientId: number; accountId: number }) {
+  const appointments = useQuery({
+    queryKey: ['patient-appointments', patientId],
+    queryFn: () => apiRequest<PageResponse<PatientAppointment>>(`/api/appointments/patients/${patientId}?page=0&size=50&sort=appointmentDate,desc`),
+  })
+
+  return <section className="patient-appointment-history" aria-labelledby="patient-appointment-history-title">
+    <div className="directory-heading"><div><p className="eyebrow">Lịch sử khám</p><h2 id="patient-appointment-history-title">Cuộc hẹn & bệnh án</h2></div></div>
+    {appointments.isPending ? <StatusPanel kind="loading" title="Đang tải lịch sử cuộc hẹn" description="Danh sách cuộc hẹn của bệnh nhân đang được tải." /> : null}
+    {appointments.isError ? <StatusPanel kind="error" title="Không tải được lịch sử cuộc hẹn" description={appointments.error.message} onRetry={() => void appointments.refetch()} /> : null}
+    {appointments.data && appointments.data.content.length === 0 ? <StatusPanel kind="empty" title="Chưa có cuộc hẹn" description="Bệnh nhân này chưa có cuộc hẹn nào với bạn." /> : null}
+    {appointments.data?.content.map((appointment) => <article key={appointment.id} className="patient-appointment-history__item card">
+      <div className="directory-heading">
+        <div><strong>{appointment.appointmentDate} · {appointment.appointmentTime.slice(0, 5)}</strong></div>
+        <span className={`appointment-status appointment-status--${appointment.status.toLowerCase()}`}>{appointmentStatusLabels[appointment.status]}</span>
+      </div>
+      {appointment.status === 'COMPLETED' && <MedicalRecordPanel appointmentId={appointment.id} accountId={accountId} canWrite />}
+    </article>)}
+  </section>
+}
+
 export function PatientDetailPage() {
   const { patientId } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { hasRole } = useAuth()
+  const { hasRole, session } = useAuth()
   const isAdmin = hasRole(['ADMIN'])
   const isPatient = hasRole(['PATIENT'])
+  const isDoctor = hasRole(['DOCTOR'])
   const rawFrom = searchParams.get('from')
   const returnTo = rawFrom === '/patients' ? rawFrom : '/dashboard'
   const requestedId = Number(patientId)
@@ -174,6 +206,7 @@ export function PatientDetailPage() {
           <h2 id="medical-history-title">Tiền sử bệnh</h2>
           <p>{patient.data.medicalHistory || 'Chưa cập nhật'}</p>
         </section>
+        {isDoctor && <PatientAppointmentHistory patientId={profileId} accountId={session?.user.id ?? 0} />}
         {canEdit && <form className="patient-profile-form" onSubmit={submitProfile}>
           <div className="directory-heading"><div><p className="eyebrow">Quản lý hồ sơ</p><h2>Cập nhật thông tin</h2></div></div>
           {formMessage && <p className={updatePatient.isError ? 'form-error' : 'form-success'} role="status">{formMessage}</p>}

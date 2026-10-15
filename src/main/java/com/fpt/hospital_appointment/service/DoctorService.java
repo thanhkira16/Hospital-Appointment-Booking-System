@@ -1,11 +1,17 @@
 package com.fpt.hospital_appointment.service;
 
+import com.fpt.hospital_appointment.dto.request.AdminCreateDoctorRequest;
 import com.fpt.hospital_appointment.dto.request.DoctorProfileRequest;
 import com.fpt.hospital_appointment.dto.response.DoctorResponse;
+import com.fpt.hospital_appointment.exception.DuplicateResourceException;
 import com.fpt.hospital_appointment.exception.ResourceNotFoundException;
 import com.fpt.hospital_appointment.model.Doctor;
+import com.fpt.hospital_appointment.model.Role;
+import com.fpt.hospital_appointment.model.User;
 import com.fpt.hospital_appointment.repository.DoctorRepository;
+import com.fpt.hospital_appointment.repository.UserRepository;
 import com.fpt.hospital_appointment.service.mapper.DoctorMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fpt.hospital_appointment.dto.PageResponse;
@@ -16,7 +22,38 @@ import org.springframework.data.domain.Pageable;
 @Service
 public class DoctorService {
     private final DoctorRepository doctorRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final DoctorMapper doctorMapper;
+
+    // Admin-driven doctor onboarding: creates the login account and the
+    // doctor profile together, with an admin-chosen temporary password.
+    @Transactional
+    public DoctorResponse createDoctorAccount(AdminCreateDoctorRequest request) {
+        String email = request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException("Email is already registered: " + email);
+        }
+        User user = User.builder()
+                .fullName(request.getFullName())
+                .email(email)
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.DOCTOR)
+                .enabled(true)
+                .mustChangePassword(request.isRequirePasswordChange())
+                .build();
+        user = userRepository.save(user);
+        Doctor doctor = Doctor.builder()
+                .user(user)
+                .specialization(request.getSpecialization())
+                .qualification(request.getQualification())
+                .yearsOfExperience(request.getYearsOfExperience())
+                .phoneNumber(request.getPhoneNumber())
+                .consultationFee(request.getConsultationFee())
+                .build();
+        Doctor saved = doctorRepository.save(doctor);
+        return doctorMapper.toResponse(saved);
+    }
 
     @Transactional(readOnly = true)
     public PageResponse<DoctorResponse> getAllDoctors(Pageable pageable) {
@@ -71,8 +108,10 @@ public class DoctorService {
         return PageResponse.from(page);
     }
 
-    public DoctorService(final DoctorRepository doctorRepository, final DoctorMapper doctorMapper) {
+    public DoctorService(final DoctorRepository doctorRepository, final UserRepository userRepository, final PasswordEncoder passwordEncoder, final DoctorMapper doctorMapper) {
         this.doctorRepository = doctorRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.doctorMapper = doctorMapper;
     }
 }

@@ -86,6 +86,14 @@ public class AppointmentService {
         return patientService.isOwner(patientId, currentUserEmail);
     }
 
+    // Used by @PreAuthorize: has this doctor ever had an appointment with
+    // the given patient? Lets a doctor pull a patient's appointment history
+    // without exposing it to unrelated doctors.
+    @Transactional(readOnly = true)
+    public boolean isDoctorTreatingPatient(Long patientId, String currentUserEmail) {
+        return appointmentRepository.existsByPatientIdAndDoctor_User_Email(patientId, currentUserEmail);
+    }
+
     // ---------- Status transitions ----------
     @Transactional
     public AppointmentResponse confirmAppointment(Long appointmentId) {

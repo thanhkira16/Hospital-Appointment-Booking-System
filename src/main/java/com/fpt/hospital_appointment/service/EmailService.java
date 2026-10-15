@@ -57,6 +57,12 @@ public class EmailService {
         sendEmail(patientEmail, subject, body);
     }
 
+    public void sendPasswordResetEmail(String toEmail, String fullName, String resetLink) {
+        String subject = "Password Reset Request - Hospital Appointment System";
+        String body = String.format("Dear %s,%n%nWe received a request to reset your password.%n%n" + "Click the link below to choose a new password. This link expires in 30 minutes:%n%s%n%n" + "If you did not request a password reset, you can safely ignore this email.%n%n" + "Thank you for using our Hospital Appointment System.", fullName, resetLink);
+        sendEmail(toEmail, subject, body);
+    }
+
     private TaskExecutor emailExecutor = Runnable::run;
 
     @Autowired

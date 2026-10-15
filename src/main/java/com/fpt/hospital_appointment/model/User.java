@@ -34,6 +34,8 @@ public class User {
     private Role role;
     @Column(nullable = false)
     private boolean enabled = true;
+    @Column(nullable = false)
+    private boolean mustChangePassword = false;
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -49,6 +51,7 @@ public class User {
         private String password;
         private Role role;
         private boolean enabled = true;
+        private boolean mustChangePassword = false;
         private LocalDateTime createdAt;
 
         UserBuilder() {
@@ -105,18 +108,26 @@ public class User {
         /**
          * @return {@code this}.
          */
+        public User.UserBuilder mustChangePassword(final boolean mustChangePassword) {
+            this.mustChangePassword = mustChangePassword;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
         public User.UserBuilder createdAt(final LocalDateTime createdAt) {
             this.createdAt = createdAt;
             return this;
         }
 
         public User build() {
-            return new User(this.id, this.fullName, this.email, this.password, this.role, this.enabled, this.createdAt);
+            return new User(this.id, this.fullName, this.email, this.password, this.role, this.enabled, this.mustChangePassword, this.createdAt);
         }
 
         @Override
         public String toString() {
-            return "User.UserBuilder(id=" + this.id + ", fullName=" + this.fullName + ", email=" + this.email + ", password=" + this.password + ", role=" + this.role + ", enabled=" + this.enabled + ", createdAt=" + this.createdAt + ")";
+            return "User.UserBuilder(id=" + this.id + ", fullName=" + this.fullName + ", email=" + this.email + ", password=" + this.password + ", role=" + this.role + ", enabled=" + this.enabled + ", mustChangePassword=" + this.mustChangePassword + ", createdAt=" + this.createdAt + ")";
         }
     }
 
@@ -148,6 +159,10 @@ public class User {
         return this.enabled;
     }
 
+    public boolean isMustChangePassword() {
+        return this.mustChangePassword;
+    }
+
     public LocalDateTime getCreatedAt() {
         return this.createdAt;
     }
@@ -176,6 +191,10 @@ public class User {
         this.enabled = enabled;
     }
 
+    public void setMustChangePassword(final boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
     public void setCreatedAt(final LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -183,13 +202,14 @@ public class User {
     public User() {
     }
 
-    public User(final Long id, final String fullName, final String email, final String password, final Role role, final boolean enabled, final LocalDateTime createdAt) {
+    public User(final Long id, final String fullName, final String email, final String password, final Role role, final boolean enabled, final boolean mustChangePassword, final LocalDateTime createdAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
         this.password = password;
         this.role = role;
         this.enabled = enabled;
+        this.mustChangePassword = mustChangePassword;
         this.createdAt = createdAt;
     }
 }

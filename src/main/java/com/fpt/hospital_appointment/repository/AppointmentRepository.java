@@ -50,4 +50,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long>,
     Optional<Appointment> findByIdAndPatientId(Long id, Long patientId);
 
     Optional<Appointment> findByIdAndDoctorId(Long id, Long doctorId);
+
+    boolean existsByPatientIdAndDoctor_User_Email(Long patientId, String email);
 }
