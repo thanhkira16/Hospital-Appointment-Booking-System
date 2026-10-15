@@ -18,6 +18,7 @@ const routeLabels: Record<string, string> = {
   '/patients': 'Danh sách bệnh nhân',
   '/appointments': 'Cuộc hẹn',
   '/admin': 'Quản trị',
+  '/admin/availability': 'Lịch rảnh và lịch khám',
   '/doctor': 'Lịch làm việc',
   '/patient': 'Đặt lịch khám',
   '/sign-in': 'Đăng nhập',
