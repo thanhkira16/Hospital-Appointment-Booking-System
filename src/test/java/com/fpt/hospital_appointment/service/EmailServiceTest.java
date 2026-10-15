@@ -73,4 +73,32 @@ class EmailServiceTest {
 
         verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
     }
+    @Test
+    void confirmation_shouldSnapshotEntityBeforeDispatch_andWaitForCommit() {
+        java.util.List<Runnable> queued = new java.util.ArrayList<>();
+        emailService.setEmailExecutor(queued::add);
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization();
+        org.springframework.transaction.support.TransactionSynchronizationManager.setActualTransactionActive(true);
+        try {
+            Appointment appointment = buildAppointment();
+            emailService.sendConfirmationNotice(appointment);
+            org.assertj.core.api.Assertions.assertThat(queued).isEmpty();
+            verifyNoInteractions(mailSender);
+            // A worker must not dereference the entity after the transaction closes.
+            appointment.setDoctor(null);
+            appointment.setPatient(null);
+            org.springframework.transaction.support.TransactionSynchronizationManager
+                    .getSynchronizations().forEach(sync -> sync.afterCommit());
+            org.assertj.core.api.Assertions.assertThat(queued).hasSize(1);
+            queued.getFirst().run();
+            var message = org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
+            verify(mailSender).send(message.capture());
+            org.assertj.core.api.Assertions.assertThat(message.getValue().getTo())
+                    .containsExactly("patient@test.com");
+            org.assertj.core.api.Assertions.assertThat(message.getValue().getText()).contains("Dr. Smith");
+        } finally {
+            org.springframework.transaction.support.TransactionSynchronizationManager.clear();
+        }
+    }
+
 }

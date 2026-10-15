@@ -5,7 +5,7 @@ import type { Role } from '../auth/types'
 const labels: Record<Role, string> = { ADMIN: 'Quản trị viên', DOCTOR: 'Bác sĩ', PATIENT: 'Bệnh nhân' }
 const destinations: Record<Role, { to: string; label: string }[]> = {
   ADMIN: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/admin', label: 'Quản trị' }, { to: '/doctors', label: 'Bác sĩ' }, { to: '/patients', label: 'Bệnh nhân' }, { to: '/appointments', label: 'Cuộc hẹn' }, { to: '/doctor', label: 'Lịch làm việc' }],
-  DOCTOR: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/doctor', label: 'Lịch làm việc' }, { to: '/patients', label: 'Bệnh nhân' }, { to: '/appointments', label: 'Cuộc hẹn' }],
+  DOCTOR: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/doctors/me', label: 'Hồ sơ cá nhân' }, { to: '/doctor', label: 'Lịch làm việc' }, { to: '/patients', label: 'Bệnh nhân' }, { to: '/appointments', label: 'Cuộc hẹn' }],
   PATIENT: [{ to: '/dashboard', label: 'Tổng quan' }, { to: '/doctors', label: 'Tìm bác sĩ' }, { to: '/patients/me', label: 'Hồ sơ cá nhân' }, { to: '/appointments', label: 'Cuộc hẹn' }],
 }
 
@@ -13,6 +13,8 @@ const routeLabels: Record<string, string> = {
   '/': 'Trang chủ',
   '/dashboard': 'Tổng quan',
   '/doctors': 'Danh sách bác sĩ',
+  '/doctors/me': 'Hồ sơ cá nhân',
+  '/patients/me': 'Hồ sơ cá nhân',
   '/patients': 'Danh sách bệnh nhân',
   '/appointments': 'Cuộc hẹn',
   '/admin': 'Quản trị',

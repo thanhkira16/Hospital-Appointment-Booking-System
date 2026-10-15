@@ -7,8 +7,11 @@ public class MedicalRecordRequest {
     @NotNull(message = "Appointment ID is required")
     private Long appointmentId;
     @NotBlank(message = "Diagnosis is required")
+    @jakarta.validation.constraints.Size(max = 1000, message = "Chẩn đoán không được vượt quá 1000 ký tự")
     private String diagnosis;
+    @jakarta.validation.constraints.Size(max = 1000, message = "Đơn thuốc không được vượt quá 1000 ký tự")
     private String prescription;
+    @jakarta.validation.constraints.Size(max = 1000, message = "Ghi chú không được vượt quá 1000 ký tự")
     private String doctorNotes;
 
     public Long getAppointmentId() {

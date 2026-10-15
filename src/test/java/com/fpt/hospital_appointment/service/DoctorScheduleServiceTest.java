@@ -132,4 +132,46 @@ class DoctorScheduleServiceTest {
 
         verify(scheduleRepository).delete(schedule);
     }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"9,17", "10,12", "8,18", "8,10", "16,18"})
+    void createSchedule_shouldRejectOverlappingWindows(int startHour, int endHour) {
+        Doctor doctor = buildDoctor(1L, "doc@test.com");
+        when(doctorService.findDoctorOrThrow(1L)).thenReturn(doctor);
+        when(scheduleRepository.findActiveForUpdate(1L, DayOfWeek.MONDAY))
+                .thenReturn(List.of(buildSchedule(1L, doctor)));
+        var request = new DoctorScheduleRequest(DayOfWeek.MONDAY,
+                LocalTime.of(startHour, 0), LocalTime.of(endHour, 0), 30);
+        assertThatThrownBy(() -> scheduleService.createSchedule(1L, request))
+                .isInstanceOf(com.fpt.hospital_appointment.exception.DuplicateResourceException.class);
+        verify(scheduleRepository, never()).save(any());
+    }
+
+    @Test
+    void createSchedule_shouldAllowAdjacentWindow() {
+        Doctor doctor = buildDoctor(1L, "doc@test.com");
+        when(doctorService.findDoctorOrThrow(1L)).thenReturn(doctor);
+        when(scheduleRepository.findActiveForUpdate(1L, DayOfWeek.MONDAY))
+                .thenReturn(List.of(buildSchedule(1L, doctor)));
+        scheduleService.createSchedule(1L, new DoctorScheduleRequest(DayOfWeek.MONDAY,
+                LocalTime.of(17, 0), LocalTime.of(18, 0), 30));
+        verify(scheduleRepository).save(any());
+    }
+
+    @Test
+    void updateSchedule_shouldAllowOwnWindow_butRejectAnotherWindow() {
+        Doctor doctor = buildDoctor(1L, "doc@test.com");
+        DoctorSchedule schedule = buildSchedule(1L, doctor);
+        when(scheduleRepository.findById(1L)).thenReturn(Optional.of(schedule));
+        when(scheduleRepository.findActiveForUpdate(1L, DayOfWeek.MONDAY))
+                .thenReturn(List.of(schedule));
+        var request = new DoctorScheduleRequest(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), 30);
+        scheduleService.updateSchedule(1L, request);
+        verify(scheduleRepository).save(schedule);
+        when(scheduleRepository.findActiveForUpdate(1L, DayOfWeek.MONDAY))
+                .thenReturn(List.of(schedule, buildSchedule(2L, doctor)));
+        assertThatThrownBy(() -> scheduleService.updateSchedule(1L, request))
+                .isInstanceOf(com.fpt.hospital_appointment.exception.DuplicateResourceException.class);
+        verify(scheduleRepository, times(1)).save(any());
+    }
 }

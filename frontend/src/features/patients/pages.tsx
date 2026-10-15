@@ -29,7 +29,7 @@ interface PatientProfileValues {
 }
 
 const pageSize = 10
-const genderLabels: Record<string, string> = { MALE: 'Nam', FEMALE: 'Nữ', OTHER: 'Khác' }
+const genderLabels: Record<string, string> = { MALE: 'Nam', FEMALE: 'Nữ', OTHER: 'Khác', Male: 'Nam', Female: 'Nữ', Other: 'Khác' }
 
 function patientDetailPath(id: number, from: string) {
   return `/patients/${id}?from=${encodeURIComponent(from)}`
@@ -80,7 +80,7 @@ export function PatientDetailPage() {
   const patient = useQuery({
     queryKey: patientId === 'me' ? ['patient', 'me'] : ['patient', requestedId],
     queryFn: () => apiRequest<Patient>(patientId === 'me' ? '/api/patients/me' : `/api/patients/${requestedId}`),
-    enabled: patientId === 'me' ? isPatient : Number.isSafeInteger(requestedId) && requestedId > 0,
+    enabled: patientId === 'me' || (Number.isSafeInteger(requestedId) && requestedId > 0),
   })
   const [formValues, setFormValues] = useState<PatientProfileValues>({ dateOfBirth: '', gender: '', phoneNumber: '', address: '', medicalHistory: '' })
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -100,6 +100,7 @@ export function PatientDetailPage() {
     onSuccess: (updated) => {
       queryClient.setQueryData(patientId === 'me' ? ['patient', 'me'] : ['patient', profileId], updated)
       void queryClient.invalidateQueries({ queryKey: ['patients'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       setFormMessage('Đã lưu thay đổi hồ sơ bệnh nhân.')
       setFieldErrors({})
       setDirty(false)
@@ -125,7 +126,7 @@ export function PatientDetailPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormValues({
       dateOfBirth: patient.data.dateOfBirth,
-      gender: patient.data.gender,
+      gender: ({ Male: 'MALE', Female: 'FEMALE', Other: 'OTHER' } as Record<string, string>)[patient.data.gender] ?? patient.data.gender,
       phoneNumber: patient.data.phoneNumber,
       address: patient.data.address,
       medicalHistory: patient.data.medicalHistory ?? '',

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { compareSchedules } from '../../shared/scheduleOrder'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
 import { ApiError, type FieldErrors, type PageResponse } from '../../shared/api/types'
@@ -37,7 +38,7 @@ export function ScheduleManagementPage() {
 
   const doctors = useQuery({
     queryKey: ['schedule-doctors'],
-    queryFn: () => apiRequest<PageResponse<Doctor>>('/api/doctors?page=0&size=100&sort=fullName,asc'),
+    queryFn: () => apiRequest<PageResponse<Doctor>>('/api/doctors?page=0&size=100&sort=user.fullName,asc'),
     enabled: isAdmin,
   })
   const currentDoctor = useQuery({
@@ -76,7 +77,7 @@ export function ScheduleManagementPage() {
     },
     onError: (error) => setFormMessage(error instanceof ApiError ? error.message : 'Không thể xóa khung giờ.'),
   })
-  const activeSchedules = schedules.data?.filter((schedule) => schedule.active) ?? []
+  const activeSchedules = schedules.data?.filter((schedule) => schedule.active).sort(compareSchedules) ?? []
 
   function selectDoctor(value: string) {
     setSelectedDoctorId(value)
@@ -101,7 +102,7 @@ export function ScheduleManagementPage() {
   return <section className="schedule-management">
     <p className="eyebrow">Lịch làm việc</p>
     <h1>Quản lý lịch hàng tuần</h1>
-    <p className="muted">Lịch lặp theo từng ngày trong tuần. Hệ thống sẽ tính slot khám cụ thể khi bệnh nhân đặt lịch.</p>
+    <p className="muted">Lịch lặp theo từng ngày trong tuần. Hệ thống sẽ tính các giờ khám còn trống khi bệnh nhân đặt lịch.</p>
     {isAdmin && <label className="field schedule-doctor-picker">Bác sĩ
       <select value={selectedDoctorId} onChange={(event) => selectDoctor(event.target.value)}>
         <option value="">Chọn bác sĩ cần quản lý</option>
@@ -110,9 +111,27 @@ export function ScheduleManagementPage() {
     </label>}
     {doctors.isError || currentDoctor.isError ? <StatusPanel kind="error" title="Không tải được bác sĩ" description="Không thể xác định bác sĩ cần quản lý." onRetry={() => { void doctors.refetch(); void currentDoctor.refetch() }} /> : null}
     {doctorId && <>
-      <form className="schedule-form card" onSubmit={(event) => { event.preventDefault(); setFormMessage(''); saveSchedule.mutate() }}>
+      <form className="schedule-form card" onSubmit={(event) => {
+        event.preventDefault()
+        if (formValues.startTime >= formValues.endTime) {
+          setFormMessage('Giờ bắt đầu phải trước giờ kết thúc.')
+          setFieldErrors({ startTime: 'Giờ bắt đầu phải trước giờ kết thúc.' })
+          return
+        }
+        const overlap = activeSchedules.some((schedule) => schedule.id !== editingId
+          && schedule.dayOfWeek === formValues.dayOfWeek
+          && formValues.startTime < formatTime(schedule.endTime)
+          && formValues.endTime > formatTime(schedule.startTime))
+        if (overlap) {
+          setFormMessage('Lịch làm việc bị trùng hoặc chồng giờ trong cùng ngày. Vui lòng chọn khung giờ khác.')
+          setFieldErrors({ startTime: 'Khung giờ này chồng lấn với lịch hiện có.' })
+          return
+        }
+        setFormMessage('')
+        saveSchedule.mutate()
+      }}>
         <div className="directory-heading"><div><p className="eyebrow">{editingId ? 'Chỉnh sửa' : 'Thêm mới'}</p><h2>{editingId ? 'Cập nhật khung giờ' : 'Thêm khung giờ'}</h2></div></div>
-        {formMessage && <p className={saveSchedule.isError || removeSchedule.isError ? 'form-error' : 'form-success'} role="status">{formMessage}</p>}
+        {formMessage && <p className={saveSchedule.isError || removeSchedule.isError || Object.values(fieldErrors).some(Boolean) ? 'form-error' : 'form-success'} role="status">{formMessage}</p>}
         <label className="field">Ngày trong tuần
           <select value={formValues.dayOfWeek} onChange={(event) => updateValue('dayOfWeek', event.target.value)}>{days.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
           {fieldErrors.dayOfWeek && <small className="field__error">{fieldErrors.dayOfWeek}</small>}
@@ -125,7 +144,7 @@ export function ScheduleManagementPage() {
           <input type="time" value={formValues.endTime} onChange={(event) => updateValue('endTime', event.target.value)} required />
           {fieldErrors.endTime && <small className="field__error">{fieldErrors.endTime}</small>}
         </label>
-        <label className="field">Độ dài mỗi slot (phút)
+        <label className="field">Thời lượng mỗi lượt khám (phút)
           <input type="number" min="5" max="120" step="5" value={formValues.slotDurationMinutes} onChange={(event) => updateValue('slotDurationMinutes', event.target.value)} required />
           {fieldErrors.slotDurationMinutes && <small className="field__error">{fieldErrors.slotDurationMinutes}</small>}
         </label>

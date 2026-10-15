@@ -1,7 +1,12 @@
 import { ApiError, type ApiResponse, type FieldErrors } from './types'
+import { vietnameseMessage } from './vietnamese'
 
 const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8082').replace(/\/$/, '')
-let getToken = () => localStorage.getItem('hospital.auth.token')
+let getToken = (): string | null => {
+  try {
+    return JSON.parse(localStorage.getItem('hospital.auth.session') ?? 'null')?.token ?? null
+  } catch { return null }
+}
 let onSessionExpired: () => void = () => undefined
 
 export function configureApiClient(options: { token: () => string | null; sessionExpired: () => void }) {
@@ -30,11 +35,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
       onSessionExpired()
       throw new ApiError('Phiên làm việc đã hết hạn.', 401)
     }
-    throw new ApiError(envelope?.message || 'Email hoặc mật khẩu không chính xác.', 401)
+    throw new ApiError(vietnameseMessage(envelope?.message, 401), 401)
   }
   if (!response.ok || !envelope?.success) {
     throw new ApiError(
-      envelope?.message || 'Yêu cầu không thể hoàn tất. Vui lòng thử lại.',
+      vietnameseMessage(envelope?.message, response.status),
       response.status,
       toFieldErrors(envelope?.data),
     )
@@ -55,6 +60,7 @@ async function readEnvelope<T>(response: Response): Promise<ApiResponse<T> | nul
 function toFieldErrors(value: unknown): FieldErrors | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
   return Object.fromEntries(
-    Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+      .map(([field, message]) => [field, vietnameseMessage(message)]),
   )
 }

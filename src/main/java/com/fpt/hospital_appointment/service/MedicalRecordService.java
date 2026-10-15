@@ -21,7 +21,7 @@ public class MedicalRecordService {
 
     @Transactional
     public MedicalRecordResponse createMedicalRecord(MedicalRecordRequest request) {
-        Appointment appointment = appointmentService.findAppointmentOrThrow(request.getAppointmentId());
+        Appointment appointment = appointmentService.findAppointmentForUpdate(request.getAppointmentId());
         if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
             throw new InvalidRequestException("Cannot create a medical record for an appointment that is not COMPLETED (current status: " + appointment.getStatus() + ")");
         }

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { configureApiClient } from '../api/client'
 import { saveAllFormDrafts } from './drafts'
 import type { AuthSession, Role } from './types'
+import { useQueryClient } from '@tanstack/react-query'
 
 const storageKey = 'hospital.auth.session'
 
@@ -19,20 +20,25 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 function readSession(): AuthSession | null {
   try {
     const value = localStorage.getItem(storageKey)
-    return value ? (JSON.parse(value) as AuthSession) : null
+    const saved = value ? JSON.parse(value) as AuthSession : null
+    return saved && typeof saved.token === 'string' && saved.token.length > 0
+      && saved.user && ['ADMIN', 'DOCTOR', 'PATIENT'].includes(saved.user.role) ? saved : null
   } catch {
     return null
   }
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  const queryClient = useQueryClient()
   const [session, setSession] = useState<AuthSession | null>(readSession)
   const [sessionExpired, setSessionExpired] = useState(false)
 
   const signOut = useCallback(() => {
     localStorage.removeItem(storageKey)
+    configureApiClient({ token: () => null, sessionExpired: () => undefined })
+    queryClient.clear()
     setSession(null)
-  }, [])
+  }, [queryClient])
 
   const expireSession = useCallback(() => {
     saveAllFormDrafts()
@@ -48,6 +54,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     session,
     sessionExpired,
     signIn: (nextSession) => {
+      queryClient.clear()
+      configureApiClient({ token: () => nextSession.token, sessionExpired: expireSession })
       localStorage.setItem(storageKey, JSON.stringify(nextSession))
       setSession(nextSession)
       setSessionExpired(false)
@@ -55,7 +63,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     signOut,
     acknowledgeExpiredSession: () => setSessionExpired(false),
     hasRole: (roles) => Boolean(session && roles.includes(session.user.role)),
-  }), [session, sessionExpired, signOut])
+  }), [session, sessionExpired, signOut, queryClient, expireSession])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

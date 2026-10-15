@@ -19,6 +19,12 @@ import java.util.List;
 public interface AppointmentRepository extends JpaRepository<Appointment, Long>,
         JpaSpecificationExecutor<Appointment> {
 
+    @org.springframework.data.jpa.repository.Query(value = "select id from doctors where id = :doctorId for update", nativeQuery = true)
+    Optional<Long> lockDoctor(@org.springframework.data.repository.query.Param("doctorId") Long doctorId);
+
+    @org.springframework.data.jpa.repository.Query(value = "select * from appointments where id = :id for update", nativeQuery = true)
+    Optional<Appointment> findForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
+
     Page<Appointment> findByPatientId(Long id, Pageable pageable);
 
     Page<Appointment> findByDoctorId(Long doctorId, Pageable pageable);

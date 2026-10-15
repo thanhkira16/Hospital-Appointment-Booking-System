@@ -30,6 +30,8 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponse bookAppointment(Long patientId, AppointmentRequest request) {
+        // Lock before any reads so availability sees the preceding booking's commit.
+        appointmentRepository.lockDoctor(request.getDoctorId());
         Doctor doctor = doctorService.findDoctorOrThrow(request.getDoctorId());
         Patient patient = patientService.findPatientOrThrow(patientId);
         slotService.validateSlotAvailability(doctor.getId(), request.getAppointmentDate(), request.getAppointmentTime());
@@ -83,7 +85,7 @@ public class AppointmentService {
     // ---------- Status transitions ----------
     @Transactional
     public AppointmentResponse confirmAppointment(Long appointmentId) {
-        Appointment appointment = findAppointmentOrThrow(appointmentId);
+        Appointment appointment = findAppointmentForUpdate(appointmentId);
         validateStatusTransition(appointment.getStatus(), AppointmentStatus.CONFIRMED);
         appointment.setStatus(AppointmentStatus.CONFIRMED);
         Appointment updated = appointmentRepository.save(appointment);
@@ -93,8 +95,11 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponse completeAppointment(Long appointmentId) {
-        Appointment appointment = findAppointmentOrThrow(appointmentId);
+        Appointment appointment = findAppointmentForUpdate(appointmentId);
         validateStatusTransition(appointment.getStatus(), AppointmentStatus.COMPLETED);
+        if (appointment.getAppointmentDate().atTime(appointment.getAppointmentTime()).isAfter(java.time.LocalDateTime.now())) {
+            throw new InvalidRequestException("Chưa đến giờ khám, không thể đánh dấu cuộc hẹn hoàn thành.");
+        }
         appointment.setStatus(AppointmentStatus.COMPLETED);
         Appointment updated = appointmentRepository.save(appointment);
         emailService.sendCompletionNotice(updated);
@@ -103,13 +108,18 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponse cancelAppointment(Long appointmentId, String cancellationReason) {
-        Appointment appointment = findAppointmentOrThrow(appointmentId);
+        Appointment appointment = findAppointmentForUpdate(appointmentId);
         validateStatusTransition(appointment.getStatus(), AppointmentStatus.CANCELLED);
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment.setCancellationReason(cancellationReason);
         Appointment updated = appointmentRepository.save(appointment);
         emailService.sendCancellationNotice(updated);
         return appointmentMapper.toResponse(updated);
+    }
+
+    @Transactional
+    public Appointment findAppointmentForUpdate(Long id) {
+        return appointmentRepository.findForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Appointment", id));
     }
 
     private void validateStatusTransition(AppointmentStatus current, AppointmentStatus target) {
@@ -126,6 +136,9 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public PageResponse<AppointmentResponse> searchAppointments(AppointmentStatus status, LocalDate fromDate, LocalDate toDate, Long doctorId, Long patientId, Pageable pageable) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new InvalidRequestException("Ngày bắt đầu không được sau ngày kết thúc.");
+        }
         var spec = AppointmentSpecification.buildSearchSpecification(status, fromDate, toDate, doctorId, patientId);
         Page<AppointmentResponse> page = appointmentRepository.findAll(spec, pageable).map(appointmentMapper::toResponse);
         return PageResponse.from(page);

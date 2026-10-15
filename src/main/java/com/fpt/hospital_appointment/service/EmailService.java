@@ -3,18 +3,16 @@ package com.fpt.hospital_appointment.service;
 import com.fpt.hospital_appointment.model.Appointment;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.stereotype.Service;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Sends email notifications for appointment lifecycle events. Every
- * method is @Async - the caller (AppointmentService) fires and forgets,
- * never blocking the API response waiting for an email to actually send.
- *
- * IMPORTANT: every method swallows its own exceptions (logs instead of
- * throwing) - a failed email must NEVER roll back or fail the underlying
- * booking/status-change transaction that triggered it.
+/** Builds notification text inside the caller's transaction and sends it after commit.
+ * Only mail messages, never managed JPA entities, cross into the email executor.
  */
 @Service
 public class EmailService {
@@ -23,7 +21,6 @@ public class EmailService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
 
-    @Async("emailTaskExecutor")
     public void sendBookingConfirmation(Appointment appointment) {
         String patientEmail = appointment.getPatient().getUser().getEmail();
         String doctorName = appointment.getDoctor().getUser().getFullName();
@@ -32,7 +29,6 @@ public class EmailService {
         sendEmail(patientEmail, subject, body);
     }
 
-    @Async("emailTaskExecutor")
     public void sendConfirmationNotice(Appointment appointment) {
         String patientEmail = appointment.getPatient().getUser().getEmail();
         String doctorName = appointment.getDoctor().getUser().getFullName();
@@ -41,7 +37,6 @@ public class EmailService {
         sendEmail(patientEmail, subject, body);
     }
 
-    @Async("emailTaskExecutor")
     public void sendCancellationNotice(Appointment appointment) {
         String patientEmail = appointment.getPatient().getUser().getEmail();
         String doctorEmail = appointment.getDoctor().getUser().getEmail();
@@ -54,7 +49,6 @@ public class EmailService {
         sendEmail(doctorEmail, subject, doctorBody);
     }
 
-    @Async("emailTaskExecutor")
     public void sendCompletionNotice(Appointment appointment) {
         String patientEmail = appointment.getPatient().getUser().getEmail();
         String doctorName = appointment.getDoctor().getUser().getFullName();
@@ -63,21 +57,43 @@ public class EmailService {
         sendEmail(patientEmail, subject, body);
     }
 
+    private TaskExecutor emailExecutor = Runnable::run;
+
+    @Autowired
+    public void setEmailExecutor(@Qualifier("emailTaskExecutor") TaskExecutor emailExecutor) {
+        this.emailExecutor = emailExecutor;
+    }
+
     // ---------- Private helper ----------
     private void sendEmail(String to, String subject, String body) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-            log.info("Email sent successfully to {}", to);
-        } catch (Exception ex) {
-            // Deliberately caught here, NOT re-thrown - a failed email
-            // must never break the calling transaction (booking/status
-            // change already succeeded and was already committed by the
-            // time this async method runs)
-            log.error("Failed to send email to {}: {}", to, ex.getMessage());
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        Runnable dispatch = () -> {
+            try {
+                emailExecutor.execute(() -> {
+                    try {
+                        mailSender.send(message);
+                        log.info("Email sent successfully to {}", to);
+                    } catch (Exception ex) {
+                        log.error("Failed to send email to {}: {}", to, ex.getMessage());
+                    }
+                });
+            } catch (Exception ex) {
+                log.error("Failed to queue email to {}: {}", to, ex.getMessage());
+            }
+        };
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    dispatch.run();
+                }
+            });
+        } else {
+            dispatch.run();
         }
     }
 

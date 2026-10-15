@@ -50,7 +50,7 @@ src/main/java/com/fpt/hospital_appointment/
 
 - Java 21 (JDK)
 - Maven 3.9+
-- XAMPP with MySQL/MariaDB running locally (default port `3306`)
+- XAMPP with MySQL/MariaDB running locally on port `3307` (avoids conflicting with an existing MySQL server on `3306`)
 
 ### Setup
 
@@ -62,7 +62,7 @@ cd hospital-appointment-api
 
 2. Start **MySQL** in the XAMPP Control Panel. From the project root, import `hospital_db.sql`; this creates `hospital_db` and inserts the sample data:
 ```powershell
-Get-Content hospital_db.sql -Raw | C:\xampp\mysql\bin\mysql.exe -u root
+Get-Content hospital_db.sql -Raw | C:\xampp\mysql\bin\mysql.exe -h 127.0.0.1 -P 3307 -u root
 ```
 You can also open phpMyAdmin at `http://localhost/phpmyadmin`, choose **Import**, select `hospital_db.sql`, and run it. The script can be imported again without duplicating the demo accounts, profiles, schedules, or same-date appointments. It creates one admin, three doctors, two patients, weekly schedules, example appointments across the lifecycle statuses, and medical records. All demo accounts use password `Password123!`:
 
@@ -77,6 +77,8 @@ You can also open phpMyAdmin at `http://localhost/phpmyadmin`, choose **Import**
 
 3. `src/main/resources/application.properties` is ready for a local XAMPP install using `root` with an empty password. If your MySQL root account has a password, set `DB_PASSWORD` before starting the application. Set `JWT_SECRET` to use a custom JWT key:
 ```properties
+DB_HOST=localhost
+DB_PORT=3307
 DB_USERNAME=root
 JWT_SECRET=replace-with-a-random-secret-of-at-least-32-characters
 ```

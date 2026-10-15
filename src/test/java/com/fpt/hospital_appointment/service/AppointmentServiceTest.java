@@ -39,7 +39,17 @@ class AppointmentStatusFlowTest {
     private AppointmentService appointmentService;
 
     private Appointment buildAppointment(AppointmentStatus status) {
-        return Appointment.builder().id(1L).status(status).build();
+        return Appointment.builder().id(1L).status(status).appointmentDate(LocalDate.now().minusDays(1))
+                .appointmentTime(LocalTime.of(8, 0)).build();
+    }
+
+    @Test
+    void completeAppointment_shouldRejectFutureVisit() {
+        Appointment appointment = buildAppointment(AppointmentStatus.CONFIRMED);
+        appointment.setAppointmentDate(LocalDate.now().plusDays(1));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
+        assertThatThrownBy(() -> appointmentService.completeAppointment(1L)).isInstanceOf(InvalidRequestException.class);
+        verify(appointmentRepository, never()).save(any());
     }
 
     private Doctor buildDoctor() {
@@ -65,7 +75,7 @@ class AppointmentStatusFlowTest {
     @Test
     void confirmAppointment_shouldSucceed_whenCurrentlyPending() {
         Appointment appointment = buildAppointment(AppointmentStatus.PENDING);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
         when(appointmentRepository.save(any())).thenReturn(appointment);
         stubMapperPassthrough();
 
@@ -77,7 +87,7 @@ class AppointmentStatusFlowTest {
     @Test
     void confirmAppointment_shouldThrow_whenNotPending() {
         Appointment appointment = buildAppointment(AppointmentStatus.COMPLETED);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.confirmAppointment(1L))
                 .isInstanceOf(InvalidRequestException.class)
@@ -87,7 +97,7 @@ class AppointmentStatusFlowTest {
     @Test
     void completeAppointment_shouldSucceed_whenCurrentlyConfirmed() {
         Appointment appointment = buildAppointment(AppointmentStatus.CONFIRMED);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
         when(appointmentRepository.save(any())).thenReturn(appointment);
         stubMapperPassthrough();
 
@@ -99,7 +109,7 @@ class AppointmentStatusFlowTest {
     @Test
     void completeAppointment_shouldThrow_whenStillPending() {
         Appointment appointment = buildAppointment(AppointmentStatus.PENDING);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.completeAppointment(1L))
                 .isInstanceOf(InvalidRequestException.class)
@@ -109,7 +119,7 @@ class AppointmentStatusFlowTest {
     @Test
     void cancelAppointment_shouldSucceed_whenPending() {
         Appointment appointment = buildAppointment(AppointmentStatus.PENDING);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
         when(appointmentRepository.save(any())).thenReturn(appointment);
         stubMapperPassthrough();
 
@@ -121,7 +131,7 @@ class AppointmentStatusFlowTest {
     @Test
     void cancelAppointment_shouldSucceed_whenConfirmed() {
         Appointment appointment = buildAppointment(AppointmentStatus.CONFIRMED);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
         when(appointmentRepository.save(any())).thenReturn(appointment);
         stubMapperPassthrough();
 
@@ -133,7 +143,7 @@ class AppointmentStatusFlowTest {
     @Test
     void cancelAppointment_shouldThrow_whenAlreadyCompleted() {
         Appointment appointment = buildAppointment(AppointmentStatus.COMPLETED);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.cancelAppointment(1L, "Too late"))
                 .isInstanceOf(InvalidRequestException.class)
@@ -143,7 +153,7 @@ class AppointmentStatusFlowTest {
     @Test
     void cancelAppointment_shouldThrow_whenAlreadyCancelled() {
         Appointment appointment = buildAppointment(AppointmentStatus.CANCELLED);
-        when(appointmentRepository.findById(1L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepository.findForUpdate(1L)).thenReturn(Optional.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.cancelAppointment(1L, "Duplicate cancel"))
                 .isInstanceOf(InvalidRequestException.class);

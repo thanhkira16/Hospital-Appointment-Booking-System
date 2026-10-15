@@ -72,6 +72,19 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("You do not have permission to perform this action"));
     }
 
+    @ExceptionHandler({org.springframework.dao.DataIntegrityViolationException.class,
+            org.springframework.dao.ConcurrencyFailureException.class})
+    public ResponseEntity<ApiResponse<Object>> handleDataConflict(Exception ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(
+                "Dữ liệu bị trùng, đang được sử dụng hoặc vừa được cập nhật. Vui lòng tải lại và kiểm tra."));
+    }
+
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ApiResponse<Object>> handleMalformedRequest(Exception ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error("Dữ liệu hoặc định dạng yêu cầu không hợp lệ."));
+    }
+
     // ---------- Catch-all fallback ----------
 
     @ExceptionHandler(Exception.class)
