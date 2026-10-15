@@ -19,7 +19,9 @@ public class RegisterRequest {
     private Role role;
     private String specialization;
     private String qualification;
+    @jakarta.validation.constraints.Min(value = 0, message = "Years of experience cannot be negative")
     private Integer yearsOfExperience;
+    @jakarta.validation.constraints.Positive(message = "Consultation fee must be positive")
     private Double consultationFee;
     private String dateOfBirth;
     private String gender;

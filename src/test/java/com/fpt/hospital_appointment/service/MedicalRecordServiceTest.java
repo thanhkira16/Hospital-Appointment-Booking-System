@@ -41,7 +41,7 @@ class MedicalRecordServiceTest {
         Appointment appointment = buildAppointment(AppointmentStatus.COMPLETED);
         MedicalRecordRequest request = new MedicalRecordRequest(1L, "Flu", "Paracetamol", "Rest advised");
 
-        when(appointmentService.findAppointmentOrThrow(1L)).thenReturn(appointment);
+        when(appointmentService.findAppointmentForUpdate(1L)).thenReturn(appointment);
         when(medicalRecordRepository.existsByAppointmentId(1L)).thenReturn(false);
         when(medicalRecordRepository.save(any(MedicalRecord.class))).thenAnswer(inv -> {
             MedicalRecord r = inv.getArgument(0);
@@ -63,7 +63,7 @@ class MedicalRecordServiceTest {
         Appointment appointment = buildAppointment(AppointmentStatus.CONFIRMED);
         MedicalRecordRequest request = new MedicalRecordRequest(1L, "Flu", "Paracetamol", "Rest advised");
 
-        when(appointmentService.findAppointmentOrThrow(1L)).thenReturn(appointment);
+        when(appointmentService.findAppointmentForUpdate(1L)).thenReturn(appointment);
 
         assertThatThrownBy(() -> medicalRecordService.createMedicalRecord(request))
                 .isInstanceOf(InvalidRequestException.class)
@@ -75,7 +75,7 @@ class MedicalRecordServiceTest {
         Appointment appointment = buildAppointment(AppointmentStatus.COMPLETED);
         MedicalRecordRequest request = new MedicalRecordRequest(1L, "Flu", "Paracetamol", "Rest advised");
 
-        when(appointmentService.findAppointmentOrThrow(1L)).thenReturn(appointment);
+        when(appointmentService.findAppointmentForUpdate(1L)).thenReturn(appointment);
         when(medicalRecordRepository.existsByAppointmentId(1L)).thenReturn(true);
 
         assertThatThrownBy(() -> medicalRecordService.createMedicalRecord(request))

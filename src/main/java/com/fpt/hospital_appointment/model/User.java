@@ -24,7 +24,7 @@ public class User {
     private String fullName;
     @Email(message = "Email must be valid")
     @NotBlank(message = "Email cannot be empty")
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
     @NotBlank(message = "Password cannot be empty")
     @Column(nullable = false)
@@ -48,7 +48,7 @@ public class User {
         private String email;
         private String password;
         private Role role;
-        private boolean enabled;
+        private boolean enabled = true;
         private LocalDateTime createdAt;
 
         UserBuilder() {
